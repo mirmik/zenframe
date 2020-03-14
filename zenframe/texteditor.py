@@ -239,12 +239,14 @@ class LineNumberArea(QWidget):
 		self.codeEditor.lineNumberAreaPaintEvent(event);
 
 class TextEditor(QPlainTextEdit):
-	def __init__(self):
+	open_start_signal = pyqtSignal(str)
+
+	def __init__(self, parent):
 		self.base_color = QColor(40, 41, 35)
 		self.lines_numbers_border = 10
 		self.last_save = time.time() - 1
 
-		QPlainTextEdit.__init__(self)
+		QPlainTextEdit.__init__(self, parent)
 		pallete = self.palette()
 		pallete.setColor(QPalette.Base, self.base_color)
 		pallete.setColor(QPalette.Text, QColor(255, 255, 255))
@@ -299,6 +301,7 @@ class TextEditor(QPlainTextEdit):
 			return
 		self.edited = path
 		self.update_text_field()
+		self.open_start_signal.emit(self.edited)
 		trace(f"TEXTEDITOR: open ... ok")
 
 	def update_text_field(self):

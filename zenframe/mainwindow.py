@@ -19,8 +19,10 @@ class MainWindow(QMainWindow, MainWindowActionsMixin):
 
 		self.init_menubar()
 
+		self.setWindowTitle(title)
 		self.console = ConsoleWidget()
-		self.texteditor = TextEditor()
+		self.texteditor = TextEditor(self)
+		self.texteditor.open_start_signal.connect(self.setWindowTitle)
 
 		self.central_widget = QWidget()
 		self.central_widget_layout = QVBoxLayout()
@@ -46,3 +48,8 @@ class MainWindow(QMainWindow, MainWindowActionsMixin):
 
 		self.setCentralWidget(self.central_widget)
 
+	def current_opened(self):
+		return self.texteditor.edited
+
+	def _open_routine(self, path):
+		self.texteditor.open(path)

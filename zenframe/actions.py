@@ -1,6 +1,10 @@
+import os
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+
+import zenframe.util
 
 class MainWindowActionsMixin:
 	def init_menubar(self):
@@ -35,6 +39,7 @@ class MainWindowActionsMixin:
 		self.mDisplayMode = self.create_action("Display mode", self.display_mode, "Display mode", "F10")
 		self.mHideBars = self.create_action("Hide Bars", self.hide_bars, "Hide bars", "F9")
 		self.mAutoUpdate = self.create_action("Restart on update", self.auto_update, "Restart on update", checkbox=True, defcheck=True)
+		self.mOpenAction = self.create_action("Open...", self.open_action, "Open", "Ctrl+O")
 
 	def hide_console(self, en):
 		self.console.setHidden(en)
@@ -92,10 +97,27 @@ class MainWindowActionsMixin:
 		#		self.notifier.retarget(self.current_opened)
 		#		self.notifier.changed.connect(self.reopen_current)
 		#		self.notifier.start()	
+
+	def open_action(self):
+		current_file = self.current_opened()
+
+		if current_file == "" or current_file == None:
+			current_directory = None
+		else:
+			current_directory = os.path.dirname(current_file)
+
+
+		path = zenframe.util.open_file_dialog(self, directory=current_directory)
+
+		if path[0] == "":
+			return
+
+		self._open_routine(path[0])
 		
 
 	def createMenus(self):
 		self.mFileMenu = self.menuBar().addMenu(self.tr("&File"))
+		self.mFileMenu.addAction(self.mOpenAction)
 		self.mFileMenu.addAction(self.mExitAction)
 
 		self.mViewMenu = self.menuBar().addMenu(self.tr("&View"))
