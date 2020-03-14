@@ -10,11 +10,11 @@ from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 # import PyQt5.QtWidgets as QtWidgets
 
 import time
-import zencad.configure
-from zencad.util import print_to_stderr
+import zenframe.configure
+from zenframe.util import print_to_stderr
 
 def trace(*args):
-	if zencad.configure.CONFIGURE_MAINWINDOW_TRACE:
+	if zenframe.configure.CONFIGURE_MAINWINDOW_TRACE:
 		print_to_stderr("MAINWINDOW:", *args)
 
 def format(color, style=""):

@@ -2,11 +2,11 @@ import threading
 import os
 import sys
 import io
-import zencad
+import zenframe
 import signal
 import psutil
 
-from zencad.util import print_to_stderr
+from zenframe.util import print_to_stderr
 from threading import Timer
 
 from PyQt5.QtWidgets import *
@@ -32,26 +32,26 @@ class ConsoleRetransler(QThread):
 		
 		while(True):
 			if self.stop_token:
-				if zencad.configure.CONFIGURE_MAIN_TRACE:
+				if zenframe.configure.CONFIGURE_MAIN_TRACE:
 					print_to_stderr("finish console retransler... ok")
 				return
 			try:
 				inputdata = self.readFile.readline()
 			except:
-				if zencad.configure.CONFIGURE_MAIN_TRACE:
+				if zenframe.configure.CONFIGURE_MAIN_TRACE:
 					print_to_stderr("finish console retransler... except")
 				return
 			
-			zencad.gui.application.MAIN_COMMUNICATOR.send({"cmd":"console","data":inputdata})
+			zenframe.application.MAIN_COMMUNICATOR.send({"cmd":"console","data":inputdata})
 
 	def finish(self):
-		if zencad.configure.CONFIGURE_MAIN_TRACE:
+		if zenframe.configure.CONFIGURE_MAIN_TRACE:
 			print_to_stderr("finish console retransler... started")
 			
 		self.stop_token = True
 
 	def do_retrans(self, old_file, new_desc=None):
-		if zencad.configure.CONFIGURE_MAIN_TRACE:
+		if zenframe.configure.CONFIGURE_MAIN_TRACE:
 			print_to_stderr("do_retrans old:{} new:{}".format(old_file, new_desc))
 
 		old_desc = old_file.fileno()

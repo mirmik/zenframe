@@ -3,11 +3,21 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import tempfile
+import sys
+import os
 
-def create_temporary_file(zencad_template=False):
+PROCNAME = str(os.getpid())
+
+def print_to_stderr(*args):
+    sys.stderr.write("STDERR {}: ".format(PROCNAME))
+    sys.stderr.write(str(args))
+    sys.stderr.write("\r\n")
+    sys.stderr.flush()
+
+def create_temporary_file(zenframe_template=False):
 	path = tempfile.mktemp(".py")
 	
-	if zencad_template:
+	if zenframe_template:
 		f = open(path, "w")
 		f.write(
 			"#!/usr/bin/env python3\n#coding: utf-8\n\n"
@@ -41,6 +51,8 @@ def save_file_dialog(parent):
 
 #def open_online_manual():
 #	QDesktopServices.openUrl(
-#		QUrl("https://mirmik.github.io/zencad", QUrl.TolerantMode)
+#		QUrl("https://mirmik.github.io/zenframe", QUrl.TolerantMode)
 #	)
 
+def set_process_name(name):
+	pass

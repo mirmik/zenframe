@@ -17,16 +17,17 @@ import psutil
 import signal
 
 import zenframe.configure
+from zenframe.util import print_to_stderr
 
 def trace(*args):
-	if zencad.configure.CONFIGURE_MAIN_TRACE: 
+	if zenframe.configure.CONFIGURE_MAIN_TRACE: 
 		sys.stderr.write(str(args))
 		sys.stderr.write("\r\n")
 		sys.stderr.flush()
 
 def finish_procedure():
-	if zencad.gui.application.CONSOLE_RETRANS_THREAD:
-		zencad.gui.application.CONSOLE_RETRANS_THREAD.finish()
+	if zenframe.application.CONSOLE_RETRANS_THREAD:
+		zenframe.application.CONSOLE_RETRANS_THREAD.finish()
 	
 	def on_terminate(proc):
 		trace("process {} finished with exit code {}".format(proc, proc.returncode))
@@ -42,26 +43,26 @@ def protect_path(s):
 def parse_args():
 	parser = argparse.ArgumentParser()
 #	parser.add_argument("-i", "--info", action="store_true")
-#	parser.add_argument('-v', "--debug", action="store_true")
+	parser.add_argument('-v', "--debug", action="store_true")
 #	parser.add_argument("--version", action="store_true")
 #	parser.add_argument("--pyservoce-version", action="store_true")
 #	parser.add_argument("-I", "--mpath", action="store_true")
-#	parser.add_argument("-m", "--module", default="zencad")
-#	parser.add_argument("--subproc", action="store_true")
+#	parser.add_argument("-m", "--module", default="zenframe")
+	parser.add_argument("--subproc", action="store_true")
 #	parser.add_argument("--replace", action="store_true")
 #	parser.add_argument("--widget", action="store_true")
 #	parser.add_argument("--prescale", action="store_true")
-#	parser.add_argument("--sleeped", action="store_true", help="Don't use manualy. Create sleeped thread.")
+	parser.add_argument("--sleeped", action="store_true", help="Don't use manualy. Create sleeped thread.")
 #	#parser.add_argument("--no-daemon", action="store_true")
 #	parser.add_argument("--no-show", action="store_true")
-#	parser.add_argument("--no-sleeped", action="store_true")
+	parser.add_argument("--no-sleeped", action="store_true")
 #	parser.add_argument("--no-screen", action="store_true")
 #	parser.add_argument("--no-evalcache-notify", action="store_true")
 #	parser.add_argument("--no-embed", action="store_true")
 #	parser.add_argument("--no-cache", action="store_true")
 #	parser.add_argument("--size")
 #	parser.add_argument("--no-restore", action="store_true")
-#	parser.add_argument("--tgtpath")
+	parser.add_argument("--tgtpath")
 #	parser.add_argument("--debugcomm", action="store_true")
 #	parser.add_argument("--session_id", type=int, default=0)
 #	parser.add_argument("paths", type=str, nargs="*", help="runned file")
@@ -70,51 +71,51 @@ def parse_args():
 #	if hasattr(pargs,"tgtpath") and pargs.tgtpath: pargs.tgtpath = protect_path(pargs.tgtpath)
 #	if len(pargs.paths) > 0: pargs.paths[0] = protect_path(pargs.paths[0])
 #
-#	if pargs.module != "zencad":
-#		print("module opt is not equal 'zencad'")
+#	if pargs.module != "zenframe":
+#		print("module opt is not equal 'zenframe'")
 #
 #	if pargs.version:
-#		print(zencad.version.__version__)
+#		print(zenframe.version.__version__)
 #		sys.exit(0)
 #
 #	if pargs.pyservoce_version:
-#		print(zencad.version.__pyservoce_version__)
+#		print(zenframe.version.__pyservoce_version__)
 #		sys.exit(0)
 #
-#	if pargs.debug:
-#		zencad.configure.verbose(True)
+	if pargs.debug:
+		zenframe.configure.verbose(True)
 #
 #	if pargs.info:
-#		zencad.configure.info(True)
+#		zenframe.configure.info(True)
 #
-#	if pargs.no_sleeped:
-#		zencad.configure.CONFIGURE_SLEEPED_OPTIMIZATION = False
+	if pargs.no_sleeped:
+		zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION = False
 #
 #	if pargs.no_cache:
-#		zencad.configure.CONFIGURE_DISABLE_LAZY=True
-#		zencad.lazifier.disable_lazy()
+#		zenframe.configure.CONFIGURE_DISABLE_LAZY=True
+#		zenframe.lazifier.disable_lazy()
 #
 #	if pargs.no_screen:
-#		zencad.configure.CONFIGURE_SCREEN_SAVER_TRANSLATE = False
+#		zenframe.configure.CONFIGURE_SCREEN_SAVER_TRANSLATE = False
 #
 #	if pargs.debugcomm:
-#		zencad.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP = True
+#		zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP = True
 #
 #	if pargs.no_evalcache_notify:
-#		zencad.configure.CONFIGURE_WITHOUT_EVALCACHE_NOTIFIES = True
+#		zenframe.configure.CONFIGURE_WITHOUT_EVALCACHE_NOTIFIES = True
 #
 #	if pargs.no_embed:
-#		zencad.configure.CONFIGURE_NO_EMBEDING_WINDOWS = True
+#		zenframe.configure.CONFIGURE_NO_EMBEDING_WINDOWS = True
 #
 #	if pargs.no_restore:
-#		zencad.configure.CONFIGURE_NO_RESTORE = True
+#		zenframe.configure.CONFIGURE_NO_RESTORE = True
 
 	return pargs
 
 
 def do_main():
 	OPPOSITE_PID_SAVE = None
-	zencad.gui.signal_handling.setup_simple_interrupt_handling()
+	zenframe.signal_handling.setup_simple_interrupt_handling()
 
 	pargs = parse_args()	
 
@@ -129,23 +130,23 @@ def do_main():
 			exit(0)
 
 		trace("start_main_application")
-		zencad.gui.application.start_main_application(pargs.tgtpath, display_mode=True, console_retrans=True)	
+		zenframe.application.start_zenframe_sandbox(pargs.tgtpath, display_mode=True, console_retrans=True)	
 		trace("start_main_application ... ok")
 		return
 
 	retrans_out_file = None
-	if pargs.replace and zencad.configure.CONFIGURE_CONSOLE_RETRANSLATE:
+	if pargs.replace and zenframe.configure.CONFIGURE_CONSOLE_RETRANSLATE:
 		# Теперь можно сделать поток для обработки данных, которые программа собирается 
 		# посылать в stdout
-		zencad.gui.application.CONSOLE_RETRANS_THREAD = zencad.gui.retransler.console_retransler(sys.stdout)
-		zencad.gui.application.CONSOLE_RETRANS_THREAD.start()
-		retrans_out_file = zencad.gui.application.CONSOLE_RETRANS_THREAD.new_file
+		zenframe.gui.application.CONSOLE_RETRANS_THREAD = zenframe.gui.retransler.console_retransler(sys.stdout)
+		zenframe.gui.application.CONSOLE_RETRANS_THREAD.start()
+		retrans_out_file = zenframe.gui.application.CONSOLE_RETRANS_THREAD.new_file
 
 	if pargs.sleeped:
 		# Эксперементальная функциональность для ускорения обновления модели. 
 		# Процесс для обновления модели создаётся заранее и ждёт, пока его пнут со стороны сервера.
-		zencad.util.PROCNAME = f"sl({os.getpid()})"
-		readFile = os.fdopen(zencad.gui.application.STDIN_FILENO)
+		zenframe.util.PROCNAME = f"sl({os.getpid()})"
+		readFile = os.fdopen(zenframe.gui.application.STDIN_FILENO)
 
 		while 1:
 			trace("SLEEPED THREAD: read")
@@ -175,22 +176,22 @@ def do_main():
 			print_to_stderr("Unpickle error_2", data)
 			exit(0)
 
-		zencad.settings.restore()			
+		zenframe.settings.restore()			
 
-	if pargs.replace and zencad.configure.CONFIGURE_CONSOLE_RETRANSLATE:
+	if pargs.replace and zenframe.configure.CONFIGURE_CONSOLE_RETRANSLATE:
 		# Теперь можно сделать поток для обработки данных, которые программа собирается 
 		# посылать в stdout
-		zencad.gui.application.MAIN_COMMUNICATOR = zencad.gui.communicator.Communicator(
+		zenframe.gui.application.MAIN_COMMUNICATOR = zenframe.gui.communicator.Communicator(
 			ifile=sys.stdin, ofile=retrans_out_file)
-		zencad.gui.application.MAIN_COMMUNICATOR.start_listen()
-		#zencad.gui.application.MAIN_COMMUNICATOR.newdata.connect(hard_finish_checker)
+		zenframe.gui.application.MAIN_COMMUNICATOR.start_listen()
+		#zenframe.gui.application.MAIN_COMMUNICATOR.newdata.connect(hard_finish_checker)
 		
 		if OPPOSITE_PID_SAVE is not None:
-			zencad.gui.application.MAIN_COMMUNICATOR.set_opposite_pid(OPPOSITE_PID_SAVE)
+			zenframe.gui.application.MAIN_COMMUNICATOR.set_opposite_pid(OPPOSITE_PID_SAVE)
 
-		zencad.lazifier.install_evalcahe_notication(zencad.gui.application.MAIN_COMMUNICATOR)
+		zenframe.lazifier.install_evalcahe_notication(zenframe.gui.application.MAIN_COMMUNICATOR)
 
-		#zencad.gui.application.MAIN_COMMUNICATOR.send({"cmd":"clientpid", "pid":int(os.getpid())})
+		#zenframe.gui.application.MAIN_COMMUNICATOR.send({"cmd":"clientpid", "pid":int(os.getpid())})
 	
 
 
@@ -199,17 +200,17 @@ def do_main():
 		# Режим презентации указывает gui, что оно предоставлено само себе
 		# и ему следует развлечь публику самостоятельно, не ожидая бинда виджета.
 		if pargs.nodaemon:
-			zencad.gui.application.start_main_application(presentation=True)
+			zenframe.gui.application.start_main_application(presentation=True)
 		else:
 			# Windows?
 			print("TODO ?")
 			sys.exit(0)
-			#subprocess.Popen("nohup python3 -m zencad --nodaemon > /dev/null 2>&1&", shell=True, stdout=None, stderr=None)
+			#subprocess.Popen("nohup python3 -m zenframe --nodaemon > /dev/null 2>&1&", shell=True, stdout=None, stderr=None)
 		
 	else:
 		# Режим работы, когда указан файл.
 		# Политика такова, что начало исполняется вычисляемый 
-		# скрипт, а потом, после вызова zencad.show,
+		# скрипт, а потом, после вызова zenframe.show,
 		# применяются указанные варианты вызова.
 		# информация отсюда транслируется функции show
 		# через глобальные переменные.
@@ -217,7 +218,7 @@ def do_main():
 			path = os.path.join(os.getcwd(), pargs.paths[0])
 		else:
 			path = pargs.paths[0]
-		zencad.showapi.EXECPATH = path
+		zenframe.showapi.EXECPATH = path
 	
 		# Устанавливаем рабочей директорией дирректорию,
 		# содержащую целевой файл.
@@ -231,26 +232,26 @@ def do_main():
 		# По умолчанию приложение работает в режиме,
 		# предполагающем вызов указанного скрипта. 
 		# Далее скрипт сам должен создать GUI через showapi.
-		zencad.showapi.SHOWMODE = "makeapp"
+		zenframe.showapi.SHOWMODE = "makeapp"
 		
 		# Специальный режим, устанавливаемый GUI при загрузке скрипта.
 		# Делает ребинд модели в уже открытом gui.
 		# Информация об окне передаётся основному процессу через пайп.
 		if pargs.replace:
-			zencad.showapi.PRESCALE = pargs.prescale
-			zencad.showapi.SESSION_ID = int(pargs.session_id)
-			zencad.showapi.SHOWMODE = "replace"
+			zenframe.showapi.PRESCALE = pargs.prescale
+			zenframe.showapi.SESSION_ID = int(pargs.session_id)
+			zenframe.showapi.SHOWMODE = "replace"
 	
 		# Режим работы в котором виджет работает отдельно и не биндится в gui:
 		if pargs.widget:
-			zencad.showapi.SHOWMODE = "widget"
+			zenframe.showapi.SHOWMODE = "widget"
 
 		if pargs.no_show:
-			zencad.showapi.SHOWMODE = "noshow"
+			zenframe.showapi.SHOWMODE = "noshow"
 
 		if pargs.size:
 			arr = pargs.size.split(',')
-			zencad.showapi.SIZE = (int(arr[0]), int(arr[1]))
+			zenframe.showapi.SIZE = (int(arr[0]), int(arr[1]))
 
 		try:
 			runpy.run_path(path, run_name="__main__")
@@ -258,7 +259,7 @@ def do_main():
 			print("Error: {}".format(ex))
 			ex_type, ex, tb = sys.exc_info()
 			print("\r\n".join(traceback.format_exception(ex_type, ex, tb)))
-			zencad.gui.application.MAIN_COMMUNICATOR.send({"cmd":"fault"})
+			zenframe.gui.application.MAIN_COMMUNICATOR.send({"cmd":"fault"})
 			time.sleep(0.1)
 			return -1
 
@@ -273,7 +274,7 @@ def main():
 	sys.exit(sts)
 
 if __name__ == "__main__":
-	zencad.util.set_process_name("zencad")
+	zenframe.util.set_process_name("zenframe")
 	main()
 
 	

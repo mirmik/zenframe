@@ -8,7 +8,7 @@ import pickle
 import threading
 import traceback
 
-from zencad.util import print_to_stderr
+from zenframe.util import print_to_stderr
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -17,10 +17,10 @@ from PyQt5.QtGui import *
 import os 
 import signal
 
-import zencad.configure
+import zenframe.configure
 
 def trace(*args):
-	if zencad.configure.CONFIGURE_COMMUNICATOR_TRACE:
+	if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
 		print_to_stderr("Communicator:", *args)
 
 class Communicator(QObject):
@@ -57,7 +57,7 @@ class Communicator(QObject):
 				try:
 					inputdata = readFile.readline()
 
-					if zencad.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+					if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
 						print_to_stderr(f"Receive: sender:{oposite_pid()} len:{len(inputdata)} dump50:{repr(inputdata[:50])}")
 
 				except Exception as ex:
@@ -97,7 +97,7 @@ class Communicator(QObject):
 					self.parent.oposite_clossed.emit()
 					return
 
-				if zencad.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+				if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
 					print_to_stderr(f"Receive: sender:{oposite_pid()} unpickle:{data_unpickled}")
 
 				if data_unpickled == "unwait":
@@ -113,7 +113,7 @@ class Communicator(QObject):
 					continue
 
 
-				if zencad.configure.CONFIGURE_COMMUNICATOR_TRACE:
+				if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
 					strform = str(data_unpickled)
 					if len(strform) > 100: strform = strform[0:101]
 					print_to_stderr("received {}: {}".format(self.parent.subproc_pid(), strform))
@@ -207,7 +207,7 @@ class Communicator(QObject):
 		self.closed = True
 
 	def send(self, obj):
-		if zencad.configure.CONFIGURE_COMMUNICATOR_TRACE:
+		if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
 			strobj = str(obj)
 			if len(strobj) > 100: strobj=strobj[:101]
 			print_to_stderr("communicator send to {}: {}".format(self.subproc_pid(), strobj))
@@ -217,13 +217,13 @@ class Communicator(QObject):
 			self.ofile.write(sendstr)
 			self.ofile.flush()
 
-			if zencad.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+			if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
 				print_to_stderr(f"Send: pipe:{self.ofile} recver:{self.subproc_pid()} len:{len(sendstr)} dump50:{[sendstr[:50]]}")
 				print_to_stderr(f"Send: pipe:{self.ofile} recver:{self.subproc_pid()} unpickle:{obj}")
 
 			return True
 		except Exception as ex:
-			if zencad.configure.CONFIGURE_COMMUNICATOR_TRACE:
+			if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
 				print_to_stderr(f"Exception on send: op_pid:{self.subproc_pid()} ifile:{self.ifile}, ofile:{self.ofile}, {strobj}, {ex}")
 				traceback.print_exc()
 			self.stop_listen()
