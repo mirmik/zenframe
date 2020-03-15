@@ -7,6 +7,10 @@ import zenframe.application
 BIND_TOKEN = None
 EXECPATH = sys.argv[0]
 
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtTest import *
 
 
 
@@ -70,8 +74,9 @@ def receiver(data):
 
 
 
-
+THRAD = None
 def bind(winid, debug=False, debugcomm=False):
+	global THRAD
 	if BIND_TOKEN is None:
 		# Запуск из консоли. Нужно создать процесс и прибиндиться к нему.
 
@@ -89,6 +94,8 @@ def bind(winid, debug=False, debugcomm=False):
 		communicator.newdata.connect(receiver)
 		communicator.oposite_clossed.connect(stop_world)
 		communicator.smooth_stop.connect(smooth_stop_world)
+
+
 
 	else:
 		# Запуск из фрейма песочницы. Нужно должить туда о готовности.

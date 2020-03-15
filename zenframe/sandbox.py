@@ -1,10 +1,14 @@
 import pickle
 import time
+import sys
+import signal
+import psutil
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtTest import *
+import PyQt5
 
 import zenframe.configure
 
@@ -18,12 +22,11 @@ def trace(*args):
 	if zenframe.configure.CONFIGURE_MAINWINDOW_TRACE:
 		print_to_stderr("MAINWINDOW:", *args)
 
-class MainWindow(QMainWindow, MainWindowActionsMixin):
+class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 	def __init__(self, 
 			client_communicator=None, 
-			openned_path=None, 
+			prestart_command=None, 
 			display_mode=False,
-			fastopen=None,
 			title = "ZenFrame"):
 		super().__init__()
 		self.openlock = QMutex()
@@ -97,10 +100,10 @@ class MainWindow(QMainWindow, MainWindowActionsMixin):
 
 				#oldcc = self.embeded_window_container
 				self.embeded_window_container = QWidget.createWindowContainer(
-					self.embeded_window)
+					self.embeded_window)    
 
+				#self.embeded_window_container.setFocusPolicy(Qt.NoFocus)
 				#self.embeded_window_container.installEventFilter(self.evfilter)
-				
 				#self.cc_window = winid
 				trace("replace widget")
 				self.vsplitter.replaceWidget(0, self.embeded_window_container)
@@ -192,3 +195,39 @@ class MainWindow(QMainWindow, MainWindowActionsMixin):
 		trace("subprocess_finalization_do")
 		for comm in self.client_finalization_list:
 			comm.send({"cmd":"stopworld"})
+
+
+
+
+
+
+
+def exec_sandbox(prestart_command, display_mode=True):
+	"""Запустить графический интерфейс в текущем потоке.
+
+	Используются файловые дескрипторы по умолчанию, которые длжен открыть
+	вызывающий поток."""
+
+	def signal_sigchild(a,b):
+		os.wait()
+
+	if sys.platform == "linux":
+		signal.signal(signal.SIGCHLD, signal_sigchild) 
+
+	qapp = QApplication([])
+
+	main_widget = ZenFrameSandbox(
+		display_mode = display_mode,
+		prestart_command=prestart_command)
+
+	main_widget.show()
+	qapp.exec()
+
+	time.sleep(0.05)
+
+	procs = psutil.Process().children()	
+	for p in procs:
+		try:
+			p.terminate()
+		except psutil.NoSuchProcess:
+			pass
