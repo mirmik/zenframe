@@ -47,8 +47,10 @@ def main():
 	pargs = parse_args(zenargs)
 
 	if pargs.agent:
+		print_to_stderr("start_agent")
 		zenframe.agent.start_agent(starter_mode=True, sleeped_mode=pargs.sleeped, command=tgtargs)
 	else:
+		print_to_stderr("start sandbox")
 		zenframe.sandbox.exec_sandbox(prestart_command=tgtargs)
 
 

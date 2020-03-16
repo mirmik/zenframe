@@ -20,7 +20,7 @@ wdg = QLabel("Hello")
 wdg.setFont(font)
 wdg.show()
 
-agent = zenframe.agent.get_agent()
+agent = zenframe.agent.make_agent(on_close=qapp.quit)
 agent.bind_window(wdg.winId())
 
 qapp.exec()

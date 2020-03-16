@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+import zenframe.configure
 import tempfile
 import sys
 import os
@@ -13,6 +14,10 @@ def print_to_stderr(*args):
     sys.stderr.write(str(args))
     sys.stderr.write("\r\n")
     sys.stderr.flush()
+
+def trace(*args):
+	if zenframe.configure.CONFIGURE_DEBUG_MODE:
+		print_to_stderr(*args)
 
 def create_temporary_file(zenframe_template=False):
 	path = tempfile.mktemp(".py")

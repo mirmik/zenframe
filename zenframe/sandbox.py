@@ -2,6 +2,7 @@ import pickle
 import time
 import sys
 import signal
+import threading
 import psutil
 
 from PyQt5.QtWidgets import *
@@ -11,6 +12,7 @@ from PyQt5.QtTest import *
 import PyQt5
 
 import zenframe.configure
+from zenframe.guard import ZenFrameGuard 
 
 from zenframe.actions import MainWindowActionsMixin
 from zenframe.console import ConsoleWidget
@@ -19,16 +21,22 @@ from zenframe.texteditor import TextEditor
 from zenframe.util import print_to_stderr
 
 def trace(*args):
-	if zenframe.configure.CONFIGURE_MAINWINDOW_TRACE:
+	if zenframe.configure.CONFIGURE_DEBUG_MODE:
 		print_to_stderr("MAINWINDOW:", *args)
 
 class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
+	message_handler_qtsignal = pyqtSignal(bytes, int)
+
 	def __init__(self, 
-			client_communicator=None, 
 			prestart_command=None, 
 			display_mode=False,
 			title = "ZenFrame"):
-		super().__init__()
+		QMainWindow.__init__(self)
+		
+		self.guard = ZenFrameGuard(starter_mode=False)
+		self.main_communicator = self.guard.main_communicator
+		self.client_communicator = self.main_communicator
+		
 		self.openlock = QMutex()
 		self.session_id=0
 
@@ -61,11 +69,6 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		if display_mode:
 			self.display_mode_enable(True)
 
-		if client_communicator:
-			self.client_communicator = client_communicator
-			self.client_communicator.newdata.connect(self.new_worker_message)
-			self.client_communicator.start_listen()
-
 		self.central_widget_layout.setContentsMargins(0,0,0,0)
 		self.central_widget_layout.setSpacing(0)
 
@@ -74,27 +77,43 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		self.client_finalization_list = []
 		self.communicator_dictionary = {}
 
+		self.init_communication()
+		self.init_sleeped()
+
+	def init_sleeped(self):
+		if zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION:
+			pass
+
+	def init_communication(self):
+		self.message_handler_qtsignal.connect(self.message_handler)
+		self.main_communicator.newdata.connect(self.message_handler_qtwrap)
+		self.main_communicator.start_listen()
+
 	def current_opened(self):
 		return self.texteditor.edited
 
 	def bind_window(self, winid, pid, session_id):
-		trace("bind_window: winid:{}, pid:{}".format(winid,pid))
+		print_to_stderr("bind_window: winid:{}, pid:{}".format(winid,pid))
 
 		if self.client_communicator.subproc_pid() != pid:
 			"""Если заявленный pid отправителя не совпадает с pid текущего коммуникатора,
 			то бинд уже неактуален."""
-			print("Nonactual bind")
+			print_to_stderr("Nonactual bind")
 			return
 		
 		if not self.openlock.tryLock():
+			print_to_stderr("openlock")
 			return
 
 		try:
 			if session_id != self.session_id:
+				print_to_stderr("session_id != self.session_id", session_id, self.session_id)
 				self.openlock.unlock()
+
 				return
 		
-			if self.is_window_binded():
+			if self.is_window_binded_mode():
+				print_to_stderr("try bind")
 				#oldwindow = self.cc_window
 				self.embeded_window = QWindow.fromWinId(winid)
 
@@ -133,7 +152,8 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		self.subprocess_finalization_do()
 		self.openlock.unlock()
 
-	def new_worker_message(self, data, procpid):
+	def message_handler(self, data, procpid):
+		print_to_stderr("new_worker_message")
 		data = pickle.loads(data)
 		try:
 			cmd = data["cmd"]
@@ -164,13 +184,17 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		else:
 			print_to_stderr("Warn: unrecognized command", data)
 
+	def message_handler_qtwrap(self, *args, **kwargs):
+		print_to_stderr(*args, **kwargs)
+		self.message_handler_qtsignal.emit(*args, **kwargs)
+
 	def _open_routine(self, path):
 		self.texteditor.open(path)
 
-	def is_window_binded(self):
+	def is_window_binded_mode(self):
 		return True
-		#bind_widget_flag = zencad.settings.get(["gui", "bind_widget"])
-		#return not bind_widget_flag == "false" and not zencad.configure.CONFIGURE_NO_EMBEDING_WINDOWS
+		#bind_widget_flag = zenframe.settings.get(["gui", "bind_widget"])
+		#return not bind_widget_flag == "false" and not zenframe.configure.CONFIGURE_NO_EMBEDING_WINDOWS
 
 
 	def synchronize_subprocess_state(self):
@@ -196,11 +220,36 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		for comm in self.client_finalization_list:
 			comm.send({"cmd":"stopworld"})
 
+	def closeEvent(self, event):
+	#	self.store_gui_state()
 
+		trace("closeEvent")
+		if self.embeded_window_container:
+			self.embeded_window_container.close()
 
+		#if self.client_communicator and self.client_communicator is not self.main_communicator:
+		#	trace("send stopworld")
+		#	self.client_communicator.send({"cmd": "stopworld"})
+		#	self.client_communicator.send({"cmd": "stopworld"})
+#		else:
+#			trace("send smooth_stopworld")
+#			self.client_communicator.send({"cmd": "smooth_stopworld"})
 
+		self.main_communicator.send({"cmd":"stopworld"})
+		self.main_communicator.stop_listen()
 
+		if zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION and self.sleeped_client:
+			trace("send sleeped optimization stopworld")
+			self.sleeped_client.send({"cmd":"stopworld"})
+			self.sleeped_client.stop_listen()
 
+		self.guard.console_retransler.finish()
+		print_to_stderr("APPLICATION quit")
+
+		time.sleep(0.05)
+		print(threading.enumerate())
+
+		APPLICATION.quit()
 
 def exec_sandbox(prestart_command, display_mode=True):
 	"""Запустить графический интерфейс в текущем потоке.
@@ -208,20 +257,22 @@ def exec_sandbox(prestart_command, display_mode=True):
 	Используются файловые дескрипторы по умолчанию, которые длжен открыть
 	вызывающий поток."""
 
+	global APPLICATION
+
 	def signal_sigchild(a,b):
 		os.wait()
 
 	if sys.platform == "linux":
 		signal.signal(signal.SIGCHLD, signal_sigchild) 
 
-	qapp = QApplication([])
+	APPLICATION = QApplication([])
 
 	main_widget = ZenFrameSandbox(
 		display_mode = display_mode,
 		prestart_command=prestart_command)
 
 	main_widget.show()
-	qapp.exec()
+	APPLICATION.exec()
 
 	time.sleep(0.05)
 

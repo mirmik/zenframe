@@ -8,12 +8,10 @@ import psutil
 
 from zenframe.util import print_to_stderr
 from threading import Timer
+import threading
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 
-class ConsoleRetransler(QThread):
+class ConsoleRetransler(threading.Thread):
 	def __init__(self, stdout, new_desc=None):
 		super().__init__()
 
@@ -32,26 +30,26 @@ class ConsoleRetransler(QThread):
 		
 		while(True):
 			if self.stop_token:
-				if zenframe.configure.CONFIGURE_MAIN_TRACE:
+				if zenframe.configure.CONFIGURE_DEBUG_MODE:
 					print_to_stderr("finish console retransler... ok")
 				return
 			try:
 				inputdata = self.readFile.readline()
 			except:
-				if zenframe.configure.CONFIGURE_MAIN_TRACE:
+				if zenframe.configure.CONFIGURE_DEBUG_MODE:
 					print_to_stderr("finish console retransler... except")
 				return
 			
-			zenframe.application.MAIN_COMMUNICATOR.send({"cmd":"console","data":inputdata})
+			self.communicator.send({"cmd":"console","data":inputdata})
 
 	def finish(self):
-		if zenframe.configure.CONFIGURE_MAIN_TRACE:
+		if zenframe.configure.CONFIGURE_DEBUG_MODE:
 			print_to_stderr("finish console retransler... started")
 			
 		self.stop_token = True
 
 	def do_retrans(self, old_file, new_desc=None):
-		if zenframe.configure.CONFIGURE_MAIN_TRACE:
+		if zenframe.configure.CONFIGURE_DEBUG_MODE:
 			print_to_stderr("do_retrans old:{} new:{}".format(old_file, new_desc))
 
 		old_desc = old_file.fileno()

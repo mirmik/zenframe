@@ -10,9 +10,9 @@ import traceback
 
 from zenframe.util import print_to_stderr
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+#from PyQt5.QtWidgets import *
+#from PyQt5.QtCore import *
+#from PyQt5.QtGui import *
 
 import os 
 import signal
@@ -20,17 +20,25 @@ import signal
 import zenframe.configure
 
 def trace(*args):
-	if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
+	if zenframe.configure.CONFIGURE_DEBUG_MODE:
 		print_to_stderr("Communicator:", *args)
 
-class Communicator(QObject):
-	smooth_stop = pyqtSignal()
-	oposite_clossed = pyqtSignal()
+class Signal:
+	def __init__(self):
+		self.handlers=[]
 
-	class Listener(QThread):
-		newdata = pyqtSignal(bytes, int)
+	def connect(self, handler):
+		self.handlers.append(handler)
+
+	def emit(self, *args, **kwargs):
+		for h in self.handlers:
+			h(*args, **kwargs)
+
+class Communicator:
+	class Listener(threading.Thread):
 		def __init__(self, ifile, parent):
 			super().__init__()
+			self.newdata = Signal()
 			self.parent = parent
 			self.event = threading.Event()
 			self.pid = os.getpid()
@@ -57,7 +65,7 @@ class Communicator(QObject):
 				try:
 					inputdata = readFile.readline()
 
-					if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+					if zenframe.configure.CONFIGURE_DEBUG_MODE:
 						print_to_stderr(f"Receive: sender:{oposite_pid()} len:{len(inputdata)} dump50:{repr(inputdata[:50])}")
 
 				except Exception as ex:
@@ -97,23 +105,27 @@ class Communicator(QObject):
 					self.parent.oposite_clossed.emit()
 					return
 
-				if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+				if zenframe.configure.CONFIGURE_DEBUG_MODE:
 					print_to_stderr(f"Receive: sender:{oposite_pid()} unpickle:{data_unpickled}")
 
 				if data_unpickled == "unwait":
 					self.unwait()
 					continue
 
-				if data_unpickled["cmd"] == "smooth_stopworld":
-					self.parent.smooth_stop.emit()
-					continue
 
-				if data_unpickled["cmd"] == "set_opposite_pid":
-					self.parent.declared_opposite_pid = data_unpickled["data"]
-					continue
+				#if data_unpickled["cmd"] == "smooth_stopworld":
+				#	self.parent.smooth_stop.emit()
+				#	continue
+
+				try:
+					if data_unpickled["cmd"] == "set_opposite_pid":
+						self.parent.declared_opposite_pid = data_unpickled["data"]
+						continue
+				except:
+					trace("Unpicled(D):", data_unpickled)
 
 
-				if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
+				if zenframe.configure.CONFIGURE_DEBUG_MODE:
 					strform = str(data_unpickled)
 					if len(strform) > 100: strform = strform[0:101]
 					print_to_stderr("received {}: {}".format(self.parent.subproc_pid(), strform))
@@ -128,6 +140,7 @@ class Communicator(QObject):
 		self.ofile = ofile
 		self.listener_thr = self.Listener(ifile=ifile, parent=self)
 		self.newdata = self.listener_thr.newdata
+		self.oposite_clossed = Signal()
 		self.listen_started = False
 		self.closed = False
 		self.closed_fds = False
@@ -207,7 +220,7 @@ class Communicator(QObject):
 		self.closed = True
 
 	def send(self, obj):
-		if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
+		if zenframe.configure.CONFIGURE_DEBUG_MODE:
 			strobj = str(obj)
 			if len(strobj) > 100: strobj=strobj[:101]
 			print_to_stderr("communicator send to {}: {}".format(self.subproc_pid(), strobj))
@@ -217,13 +230,13 @@ class Communicator(QObject):
 			self.ofile.write(sendstr)
 			self.ofile.flush()
 
-			if zenframe.configure.CONFIGURE_PRINT_COMMUNICATION_DUMP:
+			if zenframe.configure.CONFIGURE_DEBUG_MODE:
 				print_to_stderr(f"Send: pipe:{self.ofile} recver:{self.subproc_pid()} len:{len(sendstr)} dump50:{[sendstr[:50]]}")
 				print_to_stderr(f"Send: pipe:{self.ofile} recver:{self.subproc_pid()} unpickle:{obj}")
 
 			return True
 		except Exception as ex:
-			if zenframe.configure.CONFIGURE_COMMUNICATOR_TRACE:
+			if zenframe.configure.CONFIGURE_DEBUG_MODE:
 				print_to_stderr(f"Exception on send: op_pid:{self.subproc_pid()} ifile:{self.ifile}, ofile:{self.ofile}, {strobj}, {ex}")
 				traceback.print_exc()
 			self.stop_listen()

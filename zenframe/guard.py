@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import pickle
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -13,9 +14,8 @@ from zenframe.util import print_to_stderr
 
 INTERPRETER = sys.executable
 
-class ZenFrameGuard(QObject):
+class ZenFrameGuard:
 	def __init__(self, starter_mode, sleeped_mode=False):
-		super().__init__()
 		self.starter_mode = starter_mode
 		zenframe.signal_handling.setup_qt_interrupt_handling()
 		if starter_mode:
@@ -31,6 +31,8 @@ class ZenFrameGuard(QObject):
 
 		self.main_communicator = Communicator(
 			ifile=sys.stdin, ofile=self.console_retransler.new_file)
+
+		self.console_retransler.communicator = self.main_communicator
 
 	def init_console_retransler(self):
 		self.console_retransler = ConsoleRetransler(sys.stdout)
@@ -83,3 +85,26 @@ class ZenFrameGuard(QObject):
 			close_fds=True)
 
 		return subproc
+
+
+	def attach_stopworld_function(self):
+		print_to_stderr("attach_stopworld_function")
+		
+		def message_handler(data, procpid):
+			print_to_stderr("message_handler")
+			data = pickle.loads(data)
+			if data["cmd"] == "stopworld": self.stop_world()
+			elif data["cmd"] == "smooth_stopworld": self.smooth_stop_world()
+
+		self.main_communicator.newdata.connect(message_handler)
+
+	def stop_world(self):
+		print_to_stderr("self.stopworld")
+		self.main_communicator.stop_listen()
+		if self.console_retransler:
+			self.console_retransler.finish()
+		self.stop_visual_part()
+		
+	def smooth_stop_world(self):
+		print_to_stderr("self.smooth_stopworld")
+		self.stop_visual_part()
