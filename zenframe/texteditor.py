@@ -11,11 +11,7 @@ from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 import time
 import zenframe.configure
-from zenframe.util import print_to_stderr
-
-def trace(*args):
-	if zenframe.configure.CONFIGURE_MAINWINDOW_TRACE:
-		print_to_stderr("MAINWINDOW:", *args)
+from zenframe.util import print_to_stderr, trace
 
 def format(color, style=""):
 	"""Return a QTextCharFormat with the given attributes.
