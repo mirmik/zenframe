@@ -18,8 +18,9 @@ class ZenFrameAgent(ZenFrameGuard):
 	Этот объект висит в памяти активного скрипта
 	"""
 
-	def __init__(self, starter_mode, command):
+	def __init__(self, starter_mode, command, session_id=0):
 		super().__init__(starter_mode=starter_mode)
+		self.session_id = session_id
 		if starter_mode:
 			self.init_starter_mode(command)
 
@@ -44,12 +45,15 @@ class ZenFrameAgent(ZenFrameGuard):
 		self.view_object = wdg
 
 	def bind_window(self, winid):
+		print_to_stderr("BINDWIN")
+		print_to_stderr("WINID",winid)
+		print_to_stderr("COMM",self.main_communicator)
 		self.view_object = int(winid)
 		self.main_communicator.send({
 			"cmd":"bindwin", 
 			"id":int(winid), 
 			"pid":os.getpid(), 
-			"session_id":0
+			"session_id":self.session_id
 		})
 		
 	def stop_visual_part(self):
@@ -85,17 +89,17 @@ class ZenFrameAgent(ZenFrameGuard):
 
 
 instance = None
-def make_agent(on_close=None, starter_mode=True):
+def make_agent(on_close=None, starter_mode=True, session_id=0):
 	global instance
 
 	command = sys.argv
 
 	if instance is None:
-		instance = ZenFrameAgent(starter_mode=starter_mode, command=command)
+		instance = ZenFrameAgent(starter_mode=starter_mode, command=command, session_id=session_id)
 
 	instance.on_close=on_close
 	
 	return instance
 
-def start_agent(starter_mode, sleeped_mode, command):
-	agent = get_agent()
+def start_agent(starter_mode, sleeped_mode, command, session_id=0):
+	agent = make_agent(session_id=session_id, starter_mode=False)

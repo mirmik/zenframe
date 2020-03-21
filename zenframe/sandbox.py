@@ -1,6 +1,7 @@
 import pickle
 import time
 import sys
+import os
 import signal
 import threading
 import psutil
@@ -17,6 +18,8 @@ from zenframe.guard import ZenFrameGuard
 from zenframe.actions import MainWindowActionsMixin
 from zenframe.console import ConsoleWidget
 from zenframe.texteditor import TextEditor
+from zenframe.inotifier import InotifyThread
+from zenframe.screen_saver import ScreenSaverWidget
 
 from zenframe.util import print_to_stderr
 
@@ -55,7 +58,7 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		self.central_widget_layout.addWidget(self.hsplitter)
 		self.central_widget.setLayout(self.central_widget_layout)
 
-		self.screen_saver = QWidget()
+		self.screen_saver = ScreenSaverWidget()
 
 		self.hsplitter.addWidget(self.texteditor)
 		self.hsplitter.addWidget(self.vsplitter)
@@ -69,6 +72,10 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		if display_mode:
 			self.display_mode_enable(True)
 
+		print(prestart_command)
+		script = prestart_command[0]
+		self.texteditor.open(script)
+
 		self.central_widget_layout.setContentsMargins(0,0,0,0)
 		self.central_widget_layout.setSpacing(0)
 
@@ -79,6 +86,7 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 
 		self.init_communication()
 		self.init_sleeped()
+		self.init_inotifier()
 
 	def init_sleeped(self):
 		if zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION:
@@ -88,6 +96,16 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		self.message_handler_qtsignal.connect(self.message_handler)
 		self.main_communicator.newdata.connect(self.message_handler_qtwrap)
 		self.main_communicator.start_listen()
+
+	def init_inotifier(self):
+		self.notifier = InotifyThread(self)
+		self.notifier.changed.connect(self.inotifier_reopen_action)
+		self.notifier.retarget(self.current_opened())
+
+	def inotifier_reopen_action(self):
+		self._open_routine(
+			self.current_opened(), 
+			update_texteditor=True)
 
 	def current_opened(self):
 		return self.texteditor.edited
@@ -188,9 +206,6 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		print_to_stderr(*args, **kwargs)
 		self.message_handler_qtsignal.emit(*args, **kwargs)
 
-	def _open_routine(self, path):
-		self.texteditor.open(path)
-
 	def is_window_binded_mode(self):
 		return True
 		#bind_widget_flag = zenframe.settings.get(["gui", "bind_widget"])
@@ -250,6 +265,192 @@ class ZenFrameSandbox(QMainWindow, MainWindowActionsMixin):
 		print(threading.enumerate())
 
 		APPLICATION.quit()
+
+
+
+
+
+
+
+
+
+
+	def _open_routine(self, path, update_texteditor=True):
+		if not self.openlock.tryLock():
+			return
+		self.setWindowTitle(path)
+
+		another_file = path != self.current_opened()
+		oldopenned = path
+
+		if update_texteditor:
+			self.texteditor.open(path)
+
+		if self.open_in_progress is True:
+			"""Процедура открытия была инициирована раньше,
+			чем прошлый открываемый скрипт отчитался об успешном завершении"""
+			self.client_communicator.kill()
+			self.client_finalization_list.append(self.client_communicator)
+
+		if another_file:
+			self.screen_saver.drop_background()
+
+		#if self.embeded_window and self.open_in_progress is False:
+		#	if not another_file and zencad.configure.CONFIGURE_SCREEN_SAVER_TRANSLATE:
+		#		self.client_communicator.send({"cmd":"screenshot"})
+		self.client_communicator.send({"cmd":"stop_activity"})
+		self.client_finalization_list.append(self.client_communicator)
+
+		trace("planned to finalize:", len(self.client_finalization_list))
+
+		self.console.clear()
+		path = self.current_opened()
+		
+		try:
+			self.session_id += 1
+			if zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION and self.sleeped_client:
+				""" Будим спящую заготовку """
+				trace("unsleep procedure")
+				self.client_communicator = self.sleeped_client
+				size = self.vsplitter.widget(0).size()
+				size = "{},{}".format(size.width(), size.height())
+				success = self.client_communicator.send({"path":path, "need_prescale":self.need_prescale, "size":size})
+				if not success:
+					"""Если разбудить заготовку не удалось, просто создать новый процесс"""
+					trace("NOT SUCCESS UNSLEEP ROUTINE")
+					self.client_communicator = zencad.gui.application.start_unbounded_worker(path, 
+						need_prescale = self.need_prescale, session_id=self.session_id, size=self.vsplitter.widget(0).size())
+				# Инициируем создание новой заготовки.
+				self.sleeped_client = zenframe.application.spawn_sleeped_client(self.session_id + 1)
+				time.sleep(0.05)
+	
+			else:
+				""" Если оптимизация не включена, то просто создать новый процесс. """
+				self.client_communicator = zenframe.application.start_unbounded_agent(
+					path, 
+					session_id=self.session_id, 
+					size=self.vsplitter.widget(0).size())
+
+		except OSError as ex:
+			print("Err: open error")
+			return
+
+		# Теперь новый клиент готов к работе.
+		self.open_in_progress = True
+		self.communicator_dictionary[self.client_communicator.subproc.pid] = self.client_communicator
+#		trace("add to self.communicator_dictionary", [c for c in self.communicator_dictionary])
+		self.client_communicator.oposite_clossed.connect(self.delete_communicator)
+		self.client_communicator.newdata.connect(self.message_handler)
+		self.client_communicator.start_listen()
+		
+		# Добавляем путь в список последних вызовов.
+		#zencad.settings.Settings.add_recent(os.path.abspath(path))
+
+		self.screen_saver.set_loading_state()
+		# Сплиттер некоректно отработает, до первого showEvent
+		if hasattr(self, "MARKER"):
+			timeout = 100 if zenframe.configure.CONFIGURE_SLEEPED_OPTIMIZATION else 500
+			old_window_container = self.embeded_window_container
+			def foo():
+				self.openlock.lock()
+				if self.open_in_progress:
+					self.replace_widget(self.screen_saver)
+				if old_window_container is not None:
+					old_window_container.close()
+				self.openlock.unlock()
+
+			if self.is_window_binded_mode():
+				QTimer.singleShot(timeout, foo)
+		self.MARKER=None
+
+		# Если уведомления включены, обновить цель.
+		if self.notifier:
+			print_to_stderr("PATH:", path)
+			self.notifier.retarget(path)
+		
+		#self.update_recent_menu()
+
+		self.openlock.unlock()
+
+	#def resizeEvent(self, ev):
+	#	super().resizeEvent(ev)
+		#self.embeded_window_resized()
+
+	def open_fault(self):
+		self.screen_saver.set_error_state()
+
+	def delete_communicator(self, comm):
+		"""Вызывается по сигналу об окончании сеанса"""
+
+		trace("delete_communicator")
+
+		self.openlock.lock()
+		
+		comm.stop_listen()
+		
+		if comm in self.client_finalization_list:
+			self.client_finalization_list.remove(comm)
+		
+		del self.communicator_dictionary[comm.subproc.pid]
+		
+		# clean client_finalization_list from uncostistent nodes
+		for comm in self.client_finalization_list:
+			if comm not in self.communicator_dictionary.values():
+				self.client_finalization_list.remove(comm)
+
+		trace("del from self.communicator_dictionary {}".format([ c.subproc.pid for c 
+			in self.communicator_dictionary.values()]))
+
+		comm.kill()
+		#comm.subproc.wait()
+
+		self.openlock.unlock()
+
+
+
+
+	def replace_widget(self, wdg):
+		if wdg is not self.vsplitter.widget(0):
+			wdg.resize(self.vsplitter.widget(0).size())
+			self.vsplitter.replaceWidget(0, wdg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def exec_sandbox(prestart_command, display_mode=True):
 	"""Запустить графический интерфейс в текущем потоке.

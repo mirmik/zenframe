@@ -71,7 +71,7 @@ class Communicator:
 				except Exception as ex:
 					trace("readFile.readline() fault (oposite:{}, ifile:{})".format(oposite_pid(), self.ifile), ex)
 					self.parent._stop_listen_nowait()
-					self.parent.oposite_clossed.emit()
+					self.parent.oposite_clossed.emit(self.parent)
 					return
 				
 				if len(inputdata) == 0:
@@ -80,7 +80,7 @@ class Communicator:
 						continue
 					trace("input data zero size (oposite:{}, ifile:{})".format(oposite_pid(), self.ifile))
 					self.parent._stop_listen_nowait()
-					self.parent.oposite_clossed.emit()
+					self.parent.oposite_clossed.emit(self.parent)
 					return
 
 				checks = 0
@@ -90,7 +90,7 @@ class Communicator:
 				except:
 					trace("Unpicling(A):", len(inputdata), inputdata)
 					self.parent._stop_listen_nowait()
-					self.parent.oposite_clossed.emit()
+					self.parent.oposite_clossed.emit(self.parent)
 					return
 
 				try:
@@ -102,7 +102,7 @@ class Communicator:
 					continue
 
 					self.parent._stop_listen_nowait()
-					self.parent.oposite_clossed.emit()
+					self.parent.oposite_clossed.emit(self.parent)
 					return
 
 				if zenframe.configure.CONFIGURE_DEBUG_MODE:

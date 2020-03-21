@@ -40,6 +40,8 @@ class MainWindowActionsMixin:
 		self.mHideBars = self.create_action("Hide Bars", self.hide_bars, "Hide bars", "F9")
 		self.mAutoUpdate = self.create_action("Restart on update", self.auto_update, "Restart on update", checkbox=True, defcheck=True)
 		self.mOpenAction = self.create_action("Open...", self.open_action, "Open", "Ctrl+O")
+		self.mSaveAction = self.create_action("Save", self.save_action, "Save", "Ctrl+S")
+		self.mReopenAction = self.create_action("Reopen current", self.reopen_action, "Open", "Ctrl+O")
 
 	def hide_console(self, en):
 		self.console.setHidden(en)
@@ -113,11 +115,18 @@ class MainWindowActionsMixin:
 			return
 
 		self._open_routine(path[0])
+
+	def save_action(self):
+		self.texteditor.save()
 		
+	def reopen_action(self):
+		self._open_routine(self.current_opened(), update_texteditor=False)
 
 	def createMenus(self):
 		self.mFileMenu = self.menuBar().addMenu(self.tr("&File"))
+		self.mFileMenu.addAction(self.mReopenAction)
 		self.mFileMenu.addAction(self.mOpenAction)
+		self.mFileMenu.addAction(self.mSaveAction)
 		self.mFileMenu.addAction(self.mExitAction)
 
 		self.mViewMenu = self.menuBar().addMenu(self.tr("&View"))

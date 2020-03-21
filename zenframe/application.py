@@ -15,7 +15,7 @@ from PyQt5.QtGui import *
 import zenframe.signal_handling
 
 import zenframe.configure
-from zenframe.mainwindow import MainWindow 
+from zenframe.sandbox import ZenFrameSandbox 
 from zenframe.communicator import Communicator
 from zenframe.retransler import ConsoleRetransler
 from zenframe.util import print_to_stderr
@@ -24,40 +24,6 @@ INTERPRETER = sys.executable
 CONSOLE_RETRANS_THREAD = None
 MAIN_COMMUNICATOR = None
 IS_STARTER = False
-
-class XQApplication(QApplication):
-	def __init__(self,args):
-		super().__init__(args)
-
-
-#	def event(self, ev):
-#		print_to_stderr(ev)
-#		return QApplication.event(self,ev)
-#
-#	def notify(self, obj, ev):
-#		print_to_stderr(obj, ev)
-#		return QApplication.notify(self,obj,ev)
-class KeyPressEater(QObject):
-	def __init__(self, wdg):
-		super().__init__()
-		self.wdg = wdg
-
-	def eventFilter(self, obj, event):
-		if isinstance(event, (QHoverEvent, QPaintEvent, QTimerEvent, QHideEvent, QCloseEvent, QMouseEvent, QChildEvent)):
-			return False
-
-		if event.type() in (52,):
-			return False
-
-		print_to_stderr(event, event.type())
-		#if event.type() == 99 or event.type() == 11 or event.type() == 183 or event.type() == 77:
-		#	return True
-		#print_to_stderr(event, event.type())
-
-		if event.type() in ():
-			return True
-
-		return False
 
 def start_zenframe_sandbox(tgtpath=None, display_mode=False, console_retrans=False):
 	"""Запустить графический интерфейс в текущем потоке.
@@ -74,9 +40,7 @@ def start_zenframe_sandbox(tgtpath=None, display_mode=False, console_retrans=Fal
 	if sys.platform == "linux":
 		signal.signal(signal.SIGCHLD, signal_sigchild) 
 
-	qapp = XQApplication([])
-	f = KeyPressEater(qapp)
-	qapp.installEventFilter(f)
+	qapp = QApplication([])
 	zenframe.signal_handling.setup_qt_interrupt_handling()
 	#app.setWindowIcon(QIcon(os.path.dirname(__file__) + "/../industrial-robot.svg"))
 
@@ -157,6 +121,41 @@ def start_unbound_zenframe(*args, tgtpath, **kwargs):
 
 
 
+def start_agent_subprocess(path, sleeped=False, session_id=0, size=None):
+	"""Создать новый поток и отправить запрос на добавление
+	его вместо предыдущего ??? """
+	
+	sleeped = "--sleeped" if sleeped else ""
+	debug_mode = "--debug" if zenframe.configure.CONFIGURE_DEBUG_MODE else ""
+	sizestr = "--size {},{}".format(size.width(), size.height()) if size is not None else ""
+	interpreter = INTERPRETER
+
+	cmd = f'{interpreter} -m zenframe --agent {debug_mode} {sleeped} --session_id {session_id} -- "{path}"'
+
+	print_to_stderr("CMD", cmd)
+	
+	try:
+		subproc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stdin=subprocess.PIPE, 
+			close_fds=True)
+		return subproc
+	except OSError as ex:
+		print("Warn: subprocess.Popen finished with exception", ex)
+		raise ex
+
+def start_unbounded_agent(path, session_id, sleeped=False, size=None):
+	"""Запустить процесс, обсчитывающий файл path и 
+	вернуть его коммуникатор."""
+
+	subproc = start_agent_subprocess(path, sleeped, session_id, size=size)
+
+	stdout = io.TextIOWrapper(subproc.stdout, line_buffering=True)
+	stdin = io.TextIOWrapper(subproc.stdin, line_buffering=True)
+
+	communicator = zenframe.communicator.Communicator(
+		ifile=stdout, ofile=stdin)
+	communicator.subproc = subproc
+
+	return communicator
 
 
 
