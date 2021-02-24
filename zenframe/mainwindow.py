@@ -43,7 +43,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
         # Путь с именем текщего открытого/открываемого файла.
         self._current_opened = None
-        
+
         self._application_name = application_name
         self._initial_client = None
         self._current_client = None
@@ -267,7 +267,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.notifier.clear()
         self.notifier.add_target(openpath)
 
-        if True: # sleeped optimization
+        if True:  # sleeped optimization
             client = self._sleeped_client
             size = self.vsplitter.widget(0).size()
             size = "{},{}".format(size.width(), size.height())
@@ -279,7 +279,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             })
 
             self._sleeped_client = self.spawn(self._application_name)
-
 
         self._current_client = client
         self._clients[client.pid()] = client
