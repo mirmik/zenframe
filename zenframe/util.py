@@ -1,63 +1,51 @@
+import os
+import sys
+import tempfile
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-import zenframe.configure
-import tempfile
-import sys
-import os
+DEBUG_PROCESS_NAME = os.getpid()
 
-PROCNAME = str(os.getpid())
+
+def set_debug_process_name(str):
+    global DEBUG_PROCESS_NAME
+    DEBUG_PROCESS_NAME = str
+
 
 def print_to_stderr(*args):
-    sys.stderr.write("STDERR {}: ".format(PROCNAME))
+    sys.stderr.write(f"DEBUG {DEBUG_PROCESS_NAME}: ")
     sys.stderr.write(str(args))
     sys.stderr.write("\r\n")
     sys.stderr.flush()
 
-def trace(*args):
-	if zenframe.configure.CONFIGURE_DEBUG_MODE:
-		print_to_stderr(*args)
 
-def create_temporary_file(zenframe_template=False):
-	path = tempfile.mktemp(".py")
-	
-	if zenframe_template:
-		f = open(path, "w")
-		f.write(
-			"#!/usr/bin/env python3\n#coding: utf-8\n\n"
-		)
-		f.close()
+def create_temporary_file():
+    path = tempfile.mktemp(".py")
+    return path
 
-	return path
 
-def open_file_dialog(parent, directory=None):
-	filters = "*.py;;*.*"
-	defaultFilter = "*.py"
+def open_file_dialog(parent, directory=""):
+    filters = "*.py;;*.*"
+    defaultFilter = "*.py"
 
-	if directory == tempfile.gettempdir() or None:
-		directory = "." 
+    if directory == tempfile.gettempdir():
+        directory = "."
 
-	path = QFileDialog.getOpenFileName(
-		parent, "Open File", directory, filters, defaultFilter
-	)
+    path = QFileDialog.getOpenFileName(
+        parent, "Open File", directory, filters, defaultFilter
+    )
 
-	return path
+    return path
+
 
 def save_file_dialog(parent):
-	filters = "*.py;;*.*"
-	defaultFilter = "*.py"
+    filters = "*.py;;*.*"
+    defaultFilter = "*.py"
 
-	path = QFileDialog.getSaveFileName(
-		parent, "Save File", "", filters, defaultFilter
-	)
+    path = QFileDialog.getSaveFileName(
+        parent, "Save File", "", filters, defaultFilter
+    )
 
-	return path
-
-#def open_online_manual():
-#	QDesktopServices.openUrl(
-#		QUrl("https://mirmik.github.io/zenframe", QUrl.TolerantMode)
-#	)
-
-def set_process_name(name):
-	pass
+    return path

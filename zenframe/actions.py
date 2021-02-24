@@ -1,137 +1,230 @@
-import os
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+import tempfile
+import subprocess
+import os
+
+from zenframe.settings import BaseSettings
 import zenframe.util
 
-class MainWindowActionsMixin:
-	def init_menubar(self):
-		self.view_mode = False
-		self.hide_bars_mode = False
-		self.full_screen_mode = False
+class ZenFrameActionsMixin:
+    def create_action(self, text, action, tip, shortcut=None, checkbox=False, defcheck=False):
+        act = QAction(self.tr(text), self)
+        act.setStatusTip(self.tr(tip))
 
-		self.createActions()
-		self.createMenus()
+        if shortcut is not None:
+            act.setShortcut(self.tr(shortcut))
 
-	def create_action(self, text, action, tip, shortcut=None, checkbox=False, defcheck=False):
-		act = QAction(self.tr(text), self)
-		act.setStatusTip(self.tr(tip))
+        if not checkbox:
+            act.triggered.connect(action)
+        else:
+            act.setCheckable(True)
+            act.toggled.connect(action)
+            act.setChecked(defcheck)
 
-		if shortcut is not None:
-			act.setShortcut(self.tr(shortcut))
+        return act
 
-		if not checkbox:
-			act.triggered.connect(action)
-		else:
-			act.setCheckable(True)
-			act.toggled.connect(action)
-			act.setChecked(defcheck)
+    def create_actions(self):
+        self.mCreateAction = self.create_action(
+            "CreateNew...", self.createNewAction, "Create"
+        )
+        
+        self.mCreateTemp = self.create_action(
+            "NewTemporary", self.createNewTemporary, "CreateTemporary", "Ctrl+N"
+        )
+        
+        self.mOpenAction = self.create_action(
+            "Open...", self.openAction, "Open", "Ctrl+O"
+        )
+        
+        self.mSaveAction = self.create_action(
+            "Save", self.saveAction, "Save", "Ctrl+S")
+        
+        self.mSaveAs = self.create_action(
+            "SaveAs...", self.saveAsAction, "SaveAs...")
+        
+        self.mTEAction = self.create_action(
+            "Open in Editor", self.externalTextEditorOpen, "Editor", "Ctrl+E"
+        )
 
-		return act
+        self.mExitAction = self.create_action(
+            "Exit", self.close, "Exit", "Ctrl+Q")
+        
+        self.mHideConsole = self.create_action(
+            "Hide console", self.hideConsole, "Hide console", checkbox=True
+        )
+        
+        self.mHideEditor = self.create_action(
+            "Hide editor", self.hideEditor, "Hide editor", checkbox=True
+        )
+        
+        self.mAutoUpdate = self.create_action(
+            "Restart on update", self.auto_update, "Restart on update", checkbox=True, defcheck=True,
+        )
+        
+        self.mFullScreen = self.create_action(
+            "Full screen", self.fullScreen, "Full screen", "F11"
+        )
+        
+        self.mDisplayMode = self.create_action(
+            "Display mode", self.displayMode, "Display mode", "F10"
+        )
 
-	def createActions(self):
-		self.mExitAction = self.create_action("Exit", self.close, "Exit", "Ctrl+Q")
-		self.mHideConsole = self.create_action("Hide console", self.hide_console, "Hide console", checkbox=True)
-		self.mHideEditor = self.create_action("Hide editor", self.hide_editor, "Hide editor", checkbox=True)
-		self.mFullScreen = self.create_action("Full screen", self.full_screen, "Full screen", "F11")
-		self.mDisplayMode = self.create_action("Display mode", self.display_mode, "Display mode", "F10")
-		self.mHideBars = self.create_action("Hide Bars", self.hide_bars, "Hide bars", "F9")
-		self.mAutoUpdate = self.create_action("Restart on update", self.auto_update, "Restart on update", checkbox=True, defcheck=True)
-		self.mOpenAction = self.create_action("Open...", self.open_action, "Open", "Ctrl+O")
-		self.mSaveAction = self.create_action("Save", self.save_action, "Save", "Ctrl+S")
-		self.mReopenAction = self.create_action("Reopen current", self.reopen_action, "Open", "Ctrl+O")
+        self.mViewOnly = self.create_action(
+            "Hide Bars", self.viewOnly, "Hide bars", "F9"
+        )
 
-	def hide_console(self, en):
-		self.console.setHidden(en)
+        self.mReopenCurrent = self.create_action(
+            "Reopen current", self.reopen_current, "Reopen current", "Ctrl+R"
+        )
 
-	def hide_editor(self, en):
-		self.texteditor.setEnabled(not en)
-		self.texteditor.setHidden(en)
+        self.mFrameAboutAction = self.create_action(
+            "About", self.frameAboutAction, "About the ZenFrame library"
+        )
 
-		#self.client_communicator.send({"cmd":"keyboard_retranslate", "en": not en})
+    def create_menus(self):
+        self.mFileMenu = self.menuBar().addMenu(self.tr("&File"))
+        self.add_new_create_open_standart_actions()
+        self.mFileMenu.addSeparator()
+        self.add_exit_standart_action()
 
-	def hide_bars(self):
-		if not self.hide_bars_mode:	
-			self.menu_bar_height = self.menuBar().height()
-			self.menuBar().setFixedHeight(0)
-			#self.info_widget.setHidden(True)
-			self.hide_bars_mode = True
-		else:
-			self.menuBar().setFixedHeight(self.menu_bar_height)
-			#self.info_widget.setHidden(False)
-			self.hide_bars_mode = False
+        self.mEditMenu = self.menuBar().addMenu(self.tr("&Edit"))
+        self.add_editor_standart_action()
 
-	def display_mode_enable(self, en):
-		if not en:
-			self.hide_editor(False)
-			self.hide_console(False)
-			self.mHideConsole.setChecked(False)
-			self.mHideEditor.setChecked(False)			
+        self.mUtilityMenu = self.menuBar().addMenu(self.tr("&Utility"))
+        self.mUtilityMenu.addAction(self.mAutoUpdate)
 
-		else:
-			self.hide_editor(True)
-			self.hide_console(True)
-			self.mHideConsole.setChecked(True)
-			self.mHideEditor.setChecked(True)
+        self.mViewMenu = self.menuBar().addMenu(self.tr("&View"))
+        self.mViewMenu.addAction(self.mFullScreen)
+        self.mViewMenu.addAction(self.mDisplayMode)
+        self.mViewMenu.addAction(self.mViewOnly)
+        self.mViewMenu.addAction(self.mHideEditor)
+        self.mViewMenu.addAction(self.mHideConsole)
 
-	def display_mode(self):
-		self.display_mode_enable(not (self.texteditor.isHidden() or self.console.isHidden()))		
+        self.mHelpMenu = self.menuBar().addMenu(self.tr("&Help"))
+        self.mHelpMenu.addAction(self.mFrameAboutAction)
 
-	def full_screen(self):
-		if not self.full_screen_mode:
-			self.showFullScreen()
-			self.full_screen_mode = True
-		else:
-			self.showNormal()
-			self.full_screen_mode = False
+    def add_new_create_open_standart_actions(self):
+        self.mFileMenu.addAction(self.mReopenCurrent)
+        self.mFileMenu.addAction(self.mOpenAction)
+        self.mFileMenu.addAction(self.mCreateTemp)
+        self.mFileMenu.addAction(self.mCreateAction)
+        self.mFileMenu.addAction(self.mSaveAction)
+        self.mFileMenu.addAction(self.mSaveAs)
+        
+    def add_exit_standart_action(self):
+        self.mFileMenu.addAction(self.mExitAction)
 
-	def auto_update(self, en):
-		if not en:
-			pass
-		#	self.notifier.stop()
-		#	self.notifier = None
-		else:
-			pass
-		#	self.notifier = InotifyThread(self)
-		#	if self.current_opened:
-		#		self.notifier.retarget(self.current_opened)
-		#		self.notifier.changed.connect(self.reopen_current)
-		#		self.notifier.start()	
+    def add_editor_standart_action(self):
+        self.mEditMenu.addAction(self.mTEAction)
 
-	def open_action(self):
-		current_file = self.current_opened()
-
-		if current_file == "" or current_file == None:
-			current_directory = None
-		else:
-			current_directory = os.path.dirname(current_file)
+    def frameAboutAction(self):
+        QMessageBox.about(
+            self,
+            self.tr("About ZenFrame"),
+            (
+                "<p>HelloWorld"
+            ),
+        )
 
 
-		path = zenframe.util.open_file_dialog(self, directory=current_directory)
+    def createNewAction(self):
+        filters = "*.py;;*.*"
+        defaultFilter = "*.py"
 
-		if path[0] == "":
-			return
+        path = QFileDialog.getSaveFileName(
+            self, "Create New File", self.laststartpath, filters, defaultFilter
+        )
 
-		self._open_routine(path[0])
+        if path[0] == "":
+            return
 
-	def save_action(self):
-		self.texteditor.save()
-		
-	def reopen_action(self):
-		self._open_routine(self.current_opened(), update_texteditor=False)
+        self.create_new_do(path[0])
 
-	def createMenus(self):
-		self.mFileMenu = self.menuBar().addMenu(self.tr("&File"))
-		self.mFileMenu.addAction(self.mReopenAction)
-		self.mFileMenu.addAction(self.mOpenAction)
-		self.mFileMenu.addAction(self.mSaveAction)
-		self.mFileMenu.addAction(self.mExitAction)
+    def createNewTemporary(self):
+        tmpfl = tempfile.mktemp(".py")
+        self.create_new_do(tmpfl)
 
-		self.mViewMenu = self.menuBar().addMenu(self.tr("&View"))
-		self.mViewMenu.addAction(self.mFullScreen)
-		self.mViewMenu.addAction(self.mDisplayMode)
-		self.mViewMenu.addAction(self.mHideBars)
-		self.mViewMenu.addAction(self.mHideEditor)
-		self.mViewMenu.addAction(self.mHideConsole)
+    def openAction(self):
+        curopen = self.current_opened()
+        path = zenframe.util.open_file_dialog(
+            self,
+            directory=None if curopen is None else os.path.dirname(curopen))
+
+        if path[0] == "":
+            return
+
+        self.open(path[0])
+
+    def saveAction(self):
+        self.texteditor.save()
+
+    def saveAsAction(self):
+        path, template = zenframe.util.save_file_dialog(self)
+
+        if path == "":
+            return
+
+        self.texteditor.save_as(path)
+
+    def externalTextEditorOpen(self):
+        cmd = BaseSettings.instance().get(["gui", "text_editor"])
+        subprocess.Popen(cmd.format(path=self.current_opened()), shell=True)
+
+    def hideConsole(self, en):
+        self.console.setHidden(en)
+
+    def hideEditor(self, en):
+        self.texteditor.setEnabled(not en)
+        self.texteditor.setHidden(en)
+
+        if self._current_client is not None:
+            self._current_client.send(
+                {"cmd": "keyboard_retranslate", "en": not en})
+
+
+    def fullScreen(self):
+        if not self._fscreen_mode:
+            self.showFullScreen()
+            self._fscreen_mode = True
+        else:
+            self.showNormal()
+            self._fscreen_mode = False
+
+    def view_only(self, en):
+        if en:
+            self.menu_bar_height = self.menuBar().height()
+            self.menuBar().setFixedHeight(0)
+        else:
+            self.menuBar().setFixedHeight(self.menu_bar_height)
+
+        self.view_mode = en
+
+    def viewOnly(self):
+        self.view_only(not self.view_mode)
+
+    def display_mode_enable(self, en):
+        if not en:
+            self.hideEditor(False)
+            self.hideConsole(False)
+            self.mHideConsole.setChecked(False)
+            self.mHideEditor.setChecked(False)
+
+        else:
+            self.hideEditor(True)
+            self.hideConsole(True)
+            self.mHideConsole.setChecked(True)
+            self.mHideEditor.setChecked(True)
+
+    def displayMode(self):
+        self.display_mode_enable(
+            not (self.texteditor.isHidden() or self.console.isHidden()))
+
+
+    def auto_update(self, en):
+        if en:
+            self.notifier.control_unlock()
+        else:
+            self.notifier.control_lock()
