@@ -68,6 +68,12 @@ class BaseSettings:
 
         it = self._restore_type(it)
         return it
+        
+    def set(self, path, value):
+        it = self.list_of_settings
+        for p in path[:-1]:
+            it = it[p]
+        it[path[-1]] = value
 
     @classmethod
     def instance(self):

@@ -7,7 +7,7 @@ import time
 
 import zenframe.util
 from zenframe.finisher import terminate_all_subprocess, invoke_destructors, setup_interrupt_handlers
-from zenframe.unbound import unbound_worker_top_half
+from zenframe.unbound import unbound_worker_top_half, start_unbounded_worker
 
 from zenframe.configuration import Configuration
 from zenframe.retransler import ConsoleRetransler
@@ -34,7 +34,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
         if Configuration.TRACE_EXEC_OPTION:
             from zenframe.util import print_to_stderr
-            print_to_stderr(pargs)
+            print_to_stderr(sys.argv, pargs)
 
         return pargs
 

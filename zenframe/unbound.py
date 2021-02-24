@@ -27,13 +27,10 @@ if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
 
 
-def start_unbounded_worker(path, application_name, sleeped=False, need_prescale=False, session_id=0, size=None):
-    prescale = "--prescale" if need_prescale else ""
-    sleeped = "--sleeped" if sleeped else ""
-    sizestr = f"--size {size[0]},{size[1]}" if size is not None else ""
+def start_unbounded_worker(application_name):
     interpreter = sys.executable
 
-    cmd = f'{interpreter} -m {application_name} "{path}" --unbound {prescale} {sleeped} {sizestr}'
+    cmd = f'{interpreter} -m {application_name} --unbound --sleeped'
 
     subproc = None
     try:

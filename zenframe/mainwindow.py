@@ -19,6 +19,7 @@ from zenframe.util import print_to_stderr
 from zenframe.settings import BaseSettings
 from zenframe.actions import ZenFrameActionsMixin
 from zenframe.finisher import invoke_destructors, terminate_all_subprocess, remove_destructor
+from zenframe.unbound import start_unbounded_worker
 
 if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
@@ -30,12 +31,20 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
     def __init__(self,
                  title,
+                 application_name,
                  initial_communicator=None,
                  restore_gui=True
                  ):
         super().__init__()
         self.setWindowTitle(title)
 
+        # Init variables
+        self._openlock = QtCore.QMutex(QtCore.QMutex.Recursive)
+
+        # Путь с именем текщего открытого/открываемого файла.
+        self._current_opened = None
+        
+        self._application_name = application_name
         self._initial_client = None
         self._current_client = None
         self._sleeped_client = None
@@ -56,7 +65,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             self._clients[initial_pid] = self._initial_client
             self._keep_alive_pids.append(initial_pid)
 
-        self._sleeped_client = self.spawn(sleeped=True)
+        self._sleeped_client = self.spawn(self._application_name)
 
         self.init_central_widget()
         if restore_gui:
@@ -68,15 +77,14 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         # Bind signals
         self.init_changes_notifier(self.reopen_current)
 
+    def spawn(self, application_name):
+        return start_unbounded_worker(application_name=application_name)
+
     def set_retransler(self, retransler):
         self.retransler = retransler
 
     def is_reopen_mode(self):
         return self._reopen_mode
-
-    def spawn(self, sleeped=None):
-        zenframe.util.print_to_stderr("Warning: Spawn is not reimplemented")
-        return zenframe.worker.spawn_test_worker(sleeped=sleeped)
 
     def remake_sleeped_client(self):
         if self._sleeped_client:
@@ -270,13 +278,13 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
                 "size": size
             })
 
-            self._sleeped_client = self.spawn(sleeped=True)
+            self._sleeped_client = self.spawn(self._application_name)
 
 
         self._current_client = client
         self._clients[client.pid()] = client
 
-        self._current_client.communicator.bind_handler(self.new_worker_message)
+        self._current_client.communicator.bind_handler(self.message_handler)
         self._current_client.communicator.start_listen()
 
         self.enable_display_changed_mode()
@@ -289,60 +297,50 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     def openStartEvent(self, path):
         pass
 
+    def internal_key_pressed_raw(self, key, modifiers, text):
+        self.texteditor.setFocus()
+        modifiers = QtCore.Qt.KeyboardModifiers()
+        event = QtGui.QKeyEvent(
+            QtCore.QEvent.KeyPress, key, QtCore.Qt.KeyboardModifier(modifiers), text)
+        QtGui.QGuiApplication.postEvent(self.texteditor, event)
 
-#def sigchld_handler(a, b):
- #   print_to_stderr("SIGCHLD", a, b)
+    def internal_key_released_raw(self, key, modifiers):
+        modifiers = QtCore.Qt.KeyboardModifiers()
+        event = QtGui.QKeyEvent(QtCore.QEvent.KeyRelease,
+                                key, QtCore.Qt.KeyboardModifier(modifiers))
+        QtGui.QGuiApplication.postEvent(self.texteditor, event)
 
+    def open_declared(self, path):
+        self._current_opened = path
+        self.texteditor.open(path)
 
-#def start_application(openpath=None, none=False, unbound=False, norestore=False, sleeped_optimization=True):
-#    QAPP = QtWidgets.QApplication(sys.argv[1:])
-#    initial_communicator = None
-#
-#    signal.signal(signal.SIGCHLD, sigchld_handler)  # Is not worked? Why?
-#    setup_interrupt_handlers()
-#
-#    if unbound:
-#        # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
-#        # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
-#        # тегами и поступать на коммуникатор.
-#        retransler = ConsoleRetransler(sys.stdout)
-#        retransler.start()
-#
-#        # Коммуникатор будет слать сообщения на скрытый файл,
-#        # тоесть, на истинный stdout
-#        initial_communicator = Communicator(
-#            ifile=sys.stdin, ofile=retransler.new_file)
-#
-#        # Показываем ретранслятору его коммуникатор.
-#        retransler.set_communicator(initial_communicator)
-#
-#        data = initial_communicator.simple_read()
-#        dct0 = json.loads(data)
-#
-#        initial_communicator.declared_opposite_pid = int(dct0["data"])
-#
-#    openpath = zenframe.util.create_temporary_file()
-#
-#    MAINWINDOW = ZenFrame(
-#        title="ZenFrame",
-#        initial_communicator=initial_communicator,
-#        restore_gui=not norestore,
-#        sleeped_optimization=sleeped_optimization)
-#
-#    if unbound:
-#        initial_communicator.bind_handler(MAINWINDOW.new_worker_message)
-#        initial_communicator.start_listen()
-#
-#    if openpath:
-#        if not unbound:
-#            MAINWINDOW.open(openpath)
-#        else:
-#            MAINWINDOW.open_declared(openpath)
-#
-#    timer = QtCore.QTimer()
-#    timer.start(500)  # You may change this if you wish.
-#    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
-#
-#    MAINWINDOW.show()
-#    QAPP.exec()
-#
+    def message_handler(self, data, procpid):
+        try:
+            cmd = data["cmd"]
+        except:
+            return False
+
+        if procpid != self._current_client.pid() and data["cmd"] != "finish_screen":
+            return False
+
+        if cmd == 'bindwin':
+            self.bind_window(winid=data['id'], pid=data["pid"])
+        elif cmd == "except":
+            print(
+                f"Exception in subprocess with executable path: {data['path']}")
+            print(data["header"])
+            print(data["tb"])
+        elif cmd == "keypressed_raw":
+            self.internal_key_pressed_raw(
+                data["key"], data["modifiers"], data["text"])
+        elif cmd == "keyreleased_raw":
+            self.internal_key_released_raw(data["key"], data["modifiers"])
+        elif cmd == "console":
+            self.internal_console_request(data["data"])
+        else:
+            return False
+
+        return True
+
+    def internal_console_request(self, data):
+        self.console.write(data)
