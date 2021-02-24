@@ -1,3 +1,4 @@
+from zenframe.finisher import register_destructor
 import os
 import io
 import fcntl
@@ -12,7 +13,6 @@ ENABLE_PREVENT_MODE = True
 PREVENT_OUTPUT_START = ' ###### 3D rendering pipe initialisation #####\n'
 PREVENT_OUTPUT_STOP = ' ########################################\n'
 
-from zenframe.finisher import register_destructor
 
 class ConsoleRetransler(QObject):
     """Ретранслятор перехватывает поток вывода на файловый дескриптор 
@@ -53,11 +53,11 @@ class ConsoleRetransler(QObject):
         if ENABLE_PREVENT_MODE:
             if inputdata == PREVENT_OUTPUT_START:
                 self.prevent_mode = True
-    
+
             if self.prevent_mode:
                 if inputdata == PREVENT_OUTPUT_STOP:
                     self.prevent_mode = False
-    
+
                 return
 
         # TODO: Стандартизировать варианты обработки.

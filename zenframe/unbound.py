@@ -26,6 +26,7 @@ UNBOUND_MODE = False
 if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
 
+
 def start_unbounded_worker(path, application_name, sleeped=False, need_prescale=False, session_id=0, size=None):
     prescale = "--prescale" if need_prescale else ""
     sleeped = "--sleeped" if sleeped else ""
@@ -38,7 +39,7 @@ def start_unbounded_worker(path, application_name, sleeped=False, need_prescale=
     try:
         subproc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stdin=subprocess.PIPE,
                                    close_fds=True)
-    
+
     except OSError as ex:
         print("Warn: subprocess.Popen finished with exception", ex)
         raise ex
@@ -51,15 +52,16 @@ def start_unbounded_worker(path, application_name, sleeped=False, need_prescale=
 
     return client
 
+
 def unbound_worker_top_half(top_half, bottom_half):
     global COMMUNICATOR, PRESCALE_SIZE, RETRANSLER
-    global BOTTOM_HALF, UNBOUND_MODE 
+    global BOTTOM_HALF, UNBOUND_MODE
 
     BOTTOM_HALF = bottom_half
     UNBOUND_MODE = True
-    
+
     QAPP = QtWidgets.QApplication([])
-    
+
     # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
     # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
     # тегами и поступать на коммуникатор.
@@ -73,8 +75,8 @@ def unbound_worker_top_half(top_half, bottom_half):
 
     # Показываем ретранслятору его коммуникатор.
     RETRANSLER.set_communicator(COMMUNICATOR)
-    
-    if True: # Sleeped
+
+    if True:  # Sleeped
         # Спящий процесс оптимизирует время загрузки скрипта.
         # этот процесс повисает в цикле чтения и дожидается,
         # пока ему не передадут задание на выполнение.
@@ -115,8 +117,8 @@ def unbound_worker_top_half(top_half, bottom_half):
         runpy.run_path(path, run_name="__main__")
     except Exception as ex:
         tb = traceback.format_exc()
-        COMMUNICATOR.send({"cmd": "except", "path":path, "header": repr(ex), "tb": str(tb)})
-
+        COMMUNICATOR.send({"cmd": "except", "path": path,
+                           "header": repr(ex), "tb": str(tb)})
 
 
 def unbound_worker_bottom_half(scene):
@@ -177,10 +179,11 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
 
     widget = widget_creator(communicator, *args, **kwargs)
 
-    communicator.oposite_clossed.connect(QtWidgets.QApplication.instance().quit)
+    communicator.oposite_clossed.connect(
+        QtWidgets.QApplication.instance().quit)
     communicator.start_listen()
 
-    #if BIND_MODE:
+    # if BIND_MODE:
     communicator.send({
         "cmd": "bindwin",
         "id": int(widget.winId()),
@@ -197,11 +200,11 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
         if data["cmd"] == "main_finished":
             invoke_destructors()
             os.wait()
-            
-            QtWidgets.QApplication.quit()        
+
+            QtWidgets.QApplication.quit()
 
     communicator.newdata.connect(finished_listener)
-    
+
     timer = QtCore.QTimer()
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.

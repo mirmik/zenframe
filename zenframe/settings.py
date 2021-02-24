@@ -1,6 +1,7 @@
 from PyQt5.QtCore import *
 import sys
 
+
 def default_text_editor_os():
     if sys.platform == "linux":
         return "xdg-open {path}"

@@ -7,6 +7,7 @@ import time
 import sys
 import os
 
+
 class ScreenSaverWidget(QWidget):
     def __init__(self, text=None, color=QColor(137, 40, 151)):
         if text is None:
@@ -73,7 +74,7 @@ class ScreenSaverWidget(QWidget):
 
         message = self.text
 
-        if True: #time.time() - self.last_install_time > 0.1 or self.mode == "error":
+        if True:  # time.time() - self.last_install_time > 0.1 or self.mode == "error":
             painter.drawText(
                 QPoint(
                     self.width()/2 - QFontMetrics(font).width(message)/2,
@@ -103,7 +104,7 @@ class ScreenSaverWidget(QWidget):
 
         QTimer.singleShot(750, self.repaint)
 
-    #def basePaintEvent(self, ev):
+    # def basePaintEvent(self, ev):
     #    pathes = ["techpriest.jpg"]
 #
     #    painter = QPainter(self)

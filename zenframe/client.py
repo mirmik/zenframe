@@ -1,5 +1,6 @@
 from zenframe.util import print_to_stderr
 
+
 class Client:
     """ Хранит объекты, связанные с управлением одним клиентом. """
 

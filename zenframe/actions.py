@@ -9,6 +9,7 @@ import os
 from zenframe.settings import BaseSettings
 import zenframe.util
 
+
 class ZenFrameActionsMixin:
     def create_action(self, text, action, tip, shortcut=None, checkbox=False, defcheck=False):
         act = QAction(self.tr(text), self)
@@ -30,44 +31,44 @@ class ZenFrameActionsMixin:
         self.mCreateAction = self.create_action(
             "CreateNew...", self.createNewAction, "Create"
         )
-        
+
         self.mCreateTemp = self.create_action(
             "NewTemporary", self.createNewTemporary, "CreateTemporary", "Ctrl+N"
         )
-        
+
         self.mOpenAction = self.create_action(
             "Open...", self.openAction, "Open", "Ctrl+O"
         )
-        
+
         self.mSaveAction = self.create_action(
             "Save", self.saveAction, "Save", "Ctrl+S")
-        
+
         self.mSaveAs = self.create_action(
             "SaveAs...", self.saveAsAction, "SaveAs...")
-        
+
         self.mTEAction = self.create_action(
             "Open in Editor", self.externalTextEditorOpen, "Editor", "Ctrl+E"
         )
 
         self.mExitAction = self.create_action(
             "Exit", self.close, "Exit", "Ctrl+Q")
-        
+
         self.mHideConsole = self.create_action(
             "Hide console", self.hideConsole, "Hide console", checkbox=True
         )
-        
+
         self.mHideEditor = self.create_action(
             "Hide editor", self.hideEditor, "Hide editor", checkbox=True
         )
-        
+
         self.mAutoUpdate = self.create_action(
             "Restart on update", self.auto_update, "Restart on update", checkbox=True, defcheck=True,
         )
-        
+
         self.mFullScreen = self.create_action(
             "Full screen", self.fullScreen, "Full screen", "F11"
         )
-        
+
         self.mDisplayMode = self.create_action(
             "Display mode", self.displayMode, "Display mode", "F10"
         )
@@ -113,7 +114,7 @@ class ZenFrameActionsMixin:
         self.mFileMenu.addAction(self.mCreateAction)
         self.mFileMenu.addAction(self.mSaveAction)
         self.mFileMenu.addAction(self.mSaveAs)
-        
+
     def add_exit_standart_action(self):
         self.mFileMenu.addAction(self.mExitAction)
 
@@ -128,7 +129,6 @@ class ZenFrameActionsMixin:
                 "<p>HelloWorld"
             ),
         )
-
 
     def createNewAction(self):
         filters = "*.py;;*.*"
@@ -184,7 +184,6 @@ class ZenFrameActionsMixin:
             self._current_client.send(
                 {"cmd": "keyboard_retranslate", "en": not en})
 
-
     def fullScreen(self):
         if not self._fscreen_mode:
             self.showFullScreen()
@@ -221,7 +220,6 @@ class ZenFrameActionsMixin:
     def displayMode(self):
         self.display_mode_enable(
             not (self.texteditor.isHidden() or self.console.isHidden()))
-
 
     def auto_update(self, en):
         if en:

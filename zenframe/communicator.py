@@ -23,6 +23,7 @@ from zenframe.listener import Listener
 from zenframe.configuration import Configuration
 from zenframe.finisher import register_destructor
 
+
 class Communicator(QObject):
     """Объект обеспечивает связь между процессами, позволяя 
     передавать комманды и отладочный вывод между оболочком и 
@@ -47,17 +48,17 @@ class Communicator(QObject):
 
         register_destructor(id(self), self.stop_listen)
 
-    def newdata_handler(self, inputdata):  
+    def newdata_handler(self, inputdata):
         if Configuration.COMMUNICATOR_TRACE:
             print_to_stderr("recv", inputdata)
 
-        try:   
+        try:
             unwraped_data = json.loads(inputdata)
-    
+
             if unwraped_data["cmd"] == "set_opposite_pid":
                 self.declared_opposite_pid = unwraped_data["data"]
                 return
-    
+
             self.newdata.emit(unwraped_data, self.declared_opposite_pid)
 
         except Exception as ex:
@@ -87,7 +88,7 @@ class Communicator(QObject):
 
     #    flag = fcntl.fcntl(self.ifile.fileno(), fcntl.F_GETFL)
     #    fcntl.fcntl(self.ifile.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
-    #    
+    #
     #    self.sock_notifier = QtCore.QSocketNotifier(
     #        self.ifile.fileno(),
     #        QtCore.QSocketNotifier.Read,

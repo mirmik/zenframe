@@ -49,8 +49,8 @@ class ConsoleWidget(QTextEdit):
         self.write_native(data)
 
     def append(self, data):
-        if data.startswith("\r"): # TODO: Update last string
-            pass 
+        if data.startswith("\r"):  # TODO: Update last string
+            pass
 
         self.cursor.insertText(data)
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())

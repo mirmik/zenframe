@@ -24,6 +24,7 @@ from zenframe.finisher import invoke_destructors, terminate_all_subprocess, remo
 if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
 
+
 class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     """Класс реализует логику общения с подчинёнными процессами,
     управление окнами, слежение за изменениями."""
@@ -40,9 +41,9 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self._initial_client = None
         self._current_client = None
         self._sleeped_client = None
-        self._retransler= None
+        self._retransler = None
         self.notifier = InotifyThread(self)
-        
+
         self._sleeped_optimization = sleeped_optimization
 
         self._keep_alive_pids = []
@@ -68,7 +69,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
         self.create_actions()
         self.create_menus()
-        
+
         # Bind signals
         self.init_changes_notifier(self.reopen_current)
 
@@ -78,7 +79,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     def is_reopen_mode(self):
         return self._reopen_mode
 
-    def spawn(self, sleeped = None):
+    def spawn(self, sleeped=None):
         zenframe.util.print_to_stderr("Warning: Spawn is not reimplemented")
         return zenframe.worker.spawn_test_worker(sleeped=sleeped)
 
@@ -120,7 +121,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
     def init_changes_notifier(self, handler):
         self.notifier.changed.connect(handler)
- 
+
     def subprocess_finalization_do(self):
         to_delete = []
         current_pid = self._current_client.pid()
@@ -193,10 +194,14 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         })
 
     def restore_gui_state(self):
-        hsplitter_position = BaseSettings.instance().get(["memory", "hsplitter_position"])
-        vsplitter_position = BaseSettings.instance().get(["memory", "vsplitter_position"])
-        texteditor_hidden = BaseSettings.instance().get(["memory", "texteditor_hidden"])
-        console_hidden = BaseSettings.instance().get(["memory", "console_hidden"])
+        hsplitter_position = BaseSettings.instance().get(
+            ["memory", "hsplitter_position"])
+        vsplitter_position = BaseSettings.instance().get(
+            ["memory", "vsplitter_position"])
+        texteditor_hidden = BaseSettings.instance().get(
+            ["memory", "texteditor_hidden"])
+        console_hidden = BaseSettings.instance().get(
+            ["memory", "console_hidden"])
         wsize = BaseSettings.instance().get(["memory", "wsize"])
         if hsplitter_position:
             self.hsplitter.setSizes([int(s) for s in hsplitter_position])
@@ -225,10 +230,13 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         vsplitter_position = self.vsplitter.sizes()
         wsize = self.geometry()
         BaseSettings.instance().set(["memory", "texteditor_hidden"],
-                     self.texteditor.isHidden())
-        BaseSettings.instance().set(["memory", "console_hidden"], self.console.isHidden())
-        BaseSettings.instance().set(["memory", "hsplitter_position"], hsplitter_position)
-        BaseSettings.instance().set(["memory", "vsplitter_position"], vsplitter_position)
+                                    self.texteditor.isHidden())
+        BaseSettings.instance().set(
+            ["memory", "console_hidden"], self.console.isHidden())
+        BaseSettings.instance().set(
+            ["memory", "hsplitter_position"], hsplitter_position)
+        BaseSettings.instance().set(
+            ["memory", "vsplitter_position"], vsplitter_position)
         BaseSettings.instance().set(["memory", "wsize"], wsize)
         BaseSettings.instance().store()
 
@@ -236,17 +244,15 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.store_gui_state()
 
         if self._initial_client:
-            self._initial_client.send({"cmd":"main_finished"})
-        
+            self._initial_client.send({"cmd": "main_finished"})
+
         invoke_destructors()
         terminate_all_subprocess()
-
 
     def enable_display_changed_mode(self):
         self.screen_saver.set_loading_state()
         if self.vsplitter.widget(0) is not self.screen_saver:
             self.vsplitter.replaceWidget(0, self.screen_saver)
-
 
     def open(self, openpath, update_texteditor=True):
         self._openlock.lock()
@@ -276,7 +282,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         else:
             size = self.vsplitter.widget(0).size()
             size = (size[0], size[1])
-            client = self.spawn(path=openpath, need_prescale=self._bind_mode, size=size)
+            client = self.spawn(
+                path=openpath, need_prescale=self._bind_mode, size=size)
 
         self._current_client = client
         self._clients[client.pid()] = client
@@ -285,27 +292,27 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self._current_client.communicator.start_listen()
 
         self.enable_display_changed_mode()
-        
+
         self.console.clear()
         self.setWindowTitle(self._current_opened)
         self.openStartEvent(openpath)
         self._openlock.unlock()
 
-
     def openStartEvent(self, path):
         pass
 
-def sigchld_handler(a, b): 
-    print_to_stderr("SIGCHLD", a, b) 
+
+def sigchld_handler(a, b):
+    print_to_stderr("SIGCHLD", a, b)
 
 
 def start_application(openpath=None, none=False, unbound=False, norestore=False, sleeped_optimization=True):
     QAPP = QtWidgets.QApplication(sys.argv[1:])
     initial_communicator = None
 
-    signal.signal(signal.SIGCHLD, sigchld_handler) # Is not worked? Why?
+    signal.signal(signal.SIGCHLD, sigchld_handler)  # Is not worked? Why?
     setup_interrupt_handlers()
-    
+
     if unbound:
         # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
         # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
@@ -329,7 +336,7 @@ def start_application(openpath=None, none=False, unbound=False, norestore=False,
     openpath = zenframe.util.create_temporary_file()
 
     MAINWINDOW = ZenFrame(
-        title= "ZenFrame",
+        title="ZenFrame",
         initial_communicator=initial_communicator,
         restore_gui=not norestore,
         sleeped_optimization=sleeped_optimization)
@@ -347,6 +354,6 @@ def start_application(openpath=None, none=False, unbound=False, norestore=False,
     timer = QtCore.QTimer()
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
-    
+
     MAINWINDOW.show()
     QAPP.exec()

@@ -103,7 +103,6 @@ class InotifyThread(QThread):
             except FileNotFoundError:
                 pass
 
-
             if self._lock.locked():
                 self._lock.release()
             if self._control_lock.locked():
