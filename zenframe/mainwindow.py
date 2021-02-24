@@ -30,7 +30,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
     def __init__(self,
                  title,
-                 sleeped_optimization=False,
                  initial_communicator=None,
                  restore_gui=True
                  ):
@@ -42,8 +41,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self._sleeped_client = None
         self._retransler = None
         self.notifier = InotifyThread(self)
-
-        self._sleeped_optimization = sleeped_optimization
 
         self._keep_alive_pids = []
         self._clients = {}
@@ -59,8 +56,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             self._clients[initial_pid] = self._initial_client
             self._keep_alive_pids.append(initial_pid)
 
-        if self._sleeped_optimization:
-            self._sleeped_client = self.spawn(sleeped=True)
+        self._sleeped_client = self.spawn(sleeped=True)
 
         self.init_central_widget()
         if restore_gui:
@@ -155,18 +151,17 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             return
 
         try:
-            if self._bind_mode:
-                window = QtGui.QWindow.fromWinId(winid)
-                container = QtWidgets.QWidget.createWindowContainer(
-                    window)
+            window = QtGui.QWindow.fromWinId(winid)
+            container = QtWidgets.QWidget.createWindowContainer(
+                window)
 
-                # Удерживаем ссылки на объекты, чтобы избежать
-                # произвола от сборщика мусора
-                self._current_client.set_embed(
-                    window=window,
-                    widget=container)
+            # Удерживаем ссылки на объекты, чтобы избежать
+            # произвола от сборщика мусора
+            self._current_client.set_embed(
+                window=window,
+                widget=container)
 
-                self.vsplitter.replaceWidget(0, container)
+            self.vsplitter.replaceWidget(0, container)
 
             self.setWindowTitle(self._current_opened)
             self.synchronize_subprocess_state()
@@ -181,11 +176,10 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
     def synchronize_subprocess_state(self):
         size = self.vsplitter.widget(0).size()
-        if self._bind_mode:
-            self._current_client.communicator.send({
-                "cmd": "resize",
-                "size": (size.width(), size.height())
-            })
+        self._current_client.communicator.send({
+            "cmd": "resize",
+            "size": (size.width(), size.height())
+        })
 
         self._current_client.communicator.send({
             "cmd": "keyboard_retranslate",
@@ -265,24 +259,19 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.notifier.clear()
         self.notifier.add_target(openpath)
 
-        if self._sleeped_optimization:
+        if True: # sleeped optimization
             client = self._sleeped_client
             size = self.vsplitter.widget(0).size()
             size = "{},{}".format(size.width(), size.height())
             client.communicator.send({
                 "cmd": "unsleep",
                 "path": openpath,
-                "need_prescale": self._bind_mode,
+                "need_prescale": True,
                 "size": size
             })
 
             self._sleeped_client = self.spawn(sleeped=True)
 
-        else:
-            size = self.vsplitter.widget(0).size()
-            size = (size[0], size[1])
-            client = self.spawn(
-                path=openpath, need_prescale=self._bind_mode, size=size)
 
         self._current_client = client
         self._clients[client.pid()] = client
@@ -301,58 +290,59 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         pass
 
 
-def sigchld_handler(a, b):
-    print_to_stderr("SIGCHLD", a, b)
+#def sigchld_handler(a, b):
+ #   print_to_stderr("SIGCHLD", a, b)
 
 
-def start_application(openpath=None, none=False, unbound=False, norestore=False, sleeped_optimization=True):
-    QAPP = QtWidgets.QApplication(sys.argv[1:])
-    initial_communicator = None
-
-    signal.signal(signal.SIGCHLD, sigchld_handler)  # Is not worked? Why?
-    setup_interrupt_handlers()
-
-    if unbound:
-        # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
-        # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
-        # тегами и поступать на коммуникатор.
-        retransler = ConsoleRetransler(sys.stdout)
-        retransler.start()
-
-        # Коммуникатор будет слать сообщения на скрытый файл,
-        # тоесть, на истинный stdout
-        initial_communicator = Communicator(
-            ifile=sys.stdin, ofile=retransler.new_file)
-
-        # Показываем ретранслятору его коммуникатор.
-        retransler.set_communicator(initial_communicator)
-
-        data = initial_communicator.simple_read()
-        dct0 = json.loads(data)
-
-        initial_communicator.declared_opposite_pid = int(dct0["data"])
-
-    openpath = zenframe.util.create_temporary_file()
-
-    MAINWINDOW = ZenFrame(
-        title="ZenFrame",
-        initial_communicator=initial_communicator,
-        restore_gui=not norestore,
-        sleeped_optimization=sleeped_optimization)
-
-    if unbound:
-        initial_communicator.bind_handler(MAINWINDOW.new_worker_message)
-        initial_communicator.start_listen()
-
-    if openpath:
-        if not unbound:
-            MAINWINDOW.open(openpath)
-        else:
-            MAINWINDOW.open_declared(openpath)
-
-    timer = QtCore.QTimer()
-    timer.start(500)  # You may change this if you wish.
-    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
-
-    MAINWINDOW.show()
-    QAPP.exec()
+#def start_application(openpath=None, none=False, unbound=False, norestore=False, sleeped_optimization=True):
+#    QAPP = QtWidgets.QApplication(sys.argv[1:])
+#    initial_communicator = None
+#
+#    signal.signal(signal.SIGCHLD, sigchld_handler)  # Is not worked? Why?
+#    setup_interrupt_handlers()
+#
+#    if unbound:
+#        # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
+#        # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
+#        # тегами и поступать на коммуникатор.
+#        retransler = ConsoleRetransler(sys.stdout)
+#        retransler.start()
+#
+#        # Коммуникатор будет слать сообщения на скрытый файл,
+#        # тоесть, на истинный stdout
+#        initial_communicator = Communicator(
+#            ifile=sys.stdin, ofile=retransler.new_file)
+#
+#        # Показываем ретранслятору его коммуникатор.
+#        retransler.set_communicator(initial_communicator)
+#
+#        data = initial_communicator.simple_read()
+#        dct0 = json.loads(data)
+#
+#        initial_communicator.declared_opposite_pid = int(dct0["data"])
+#
+#    openpath = zenframe.util.create_temporary_file()
+#
+#    MAINWINDOW = ZenFrame(
+#        title="ZenFrame",
+#        initial_communicator=initial_communicator,
+#        restore_gui=not norestore,
+#        sleeped_optimization=sleeped_optimization)
+#
+#    if unbound:
+#        initial_communicator.bind_handler(MAINWINDOW.new_worker_message)
+#        initial_communicator.start_listen()
+#
+#    if openpath:
+#        if not unbound:
+#            MAINWINDOW.open(openpath)
+#        else:
+#            MAINWINDOW.open_declared(openpath)
+#
+#    timer = QtCore.QTimer()
+#    timer.start(500)  # You may change this if you wish.
+#    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
+#
+#    MAINWINDOW.show()
+#    QAPP.exec()
+#
