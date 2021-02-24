@@ -15,7 +15,6 @@ from zenframe.configuration import Configuration
 
 import zenframe.util
 from zenframe.util import print_to_stderr
-import zenframe.worker
 
 from zenframe.settings import BaseSettings
 from zenframe.actions import ZenFrameActionsMixin
