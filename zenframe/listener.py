@@ -4,10 +4,20 @@ import PyQt5.QtCore as QtCore
 import select
 import io
 import os
+import sys
 import signal
-import fcntl
 
-from zenframe.util import print_to_stderr
+#from zenframe.util import print_to_stderr
+
+if sys.platform == "linux":
+    import fcntl
+elif sys.platform == "win32":
+    import msvcrt
+    from ctypes import windll, byref, wintypes, GetLastError, WinError
+    from ctypes.wintypes import HANDLE, DWORD
+    PIPE_NOWAIT = wintypes.DWORD(0x00000001)
+else:
+    raise Exception("Unresolved OS error")
 
 
 class Listener(QtCore.QThread):
@@ -23,17 +33,35 @@ class Listener(QtCore.QThread):
         self._stop_token = True
 
     def run(self):
-        flags = fcntl.fcntl(self._file.fileno(), fcntl.F_GETFL)
-        fcntl.fcntl(self._file.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
+        print("RUN")
+        if sys.platform == "linux":
+            flags = fcntl.fcntl(self._file.fileno(), fcntl.F_GETFL)
+            fcntl.fcntl(self._file.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        elif sys.platform == "win32":
+        #    h = msvcrt.get_osfhandle(self._file.fileno())
+        #    res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
+        #    if res == 0:
+        #        print("SetNamedPipeHandleState result is 0")
+        #        print(WinError())
+        #        return False
+            pass
+        else:
+            raise Exception("Unresolved OS error")
+        
+        print("RUN2")
         while True:
             if self._stop_token:
                 return
 
-            res = select.select([self._file.fileno()], [self._file.fileno()], [
-                                self._file.fileno()], 0.3)
-            if (len(res[0]) == 0 and len(res[1]) == 0 and len(res[2]) == 0):
-                continue
+            if sys.platform == "linux":
+                res = select.select([self._file.fileno()], [self._file.fileno()], [
+                                    self._file.fileno()], 0.3)
+                if (len(res[0]) == 0 and len(res[1]) == 0 and len(res[2]) == 0):
+                    continue
+            elif sys.platform == "win32":
+                pass
+            else:
+                raise Exception("Unresolved OS error")
 
             while True:
                 data = self._file.readline()

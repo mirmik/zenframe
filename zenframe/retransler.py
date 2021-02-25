@@ -1,7 +1,6 @@
 from zenframe.finisher import register_destructor
 import os
 import io
-import fcntl
 import sys
 
 import PyQt5.QtCore as QtCore

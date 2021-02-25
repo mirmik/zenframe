@@ -71,6 +71,9 @@ def invoke(pargs, frame_creator, exec_top_half, exec_bottom_half):
     invoke_destructors()
     terminate_all_subprocess()
 
+    if Configuration.TRACE_EXEC_OPTION:
+        from zenframe.util import print_to_stderr
+        print_to_stderr("exit")
 
 def exec_frame_process(pargs, frame_creator):
     """ Запускает графическую оболочку, которая управляет.

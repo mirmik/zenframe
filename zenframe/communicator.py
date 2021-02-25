@@ -5,7 +5,6 @@ import sys
 import io
 import base64
 import json
-import fcntl
 import threading
 import traceback
 

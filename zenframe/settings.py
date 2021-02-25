@@ -78,3 +78,24 @@ class BaseSettings:
     @classmethod
     def instance(self):
         return self._instance
+
+
+# if not reimplemented
+BaseSettings("zenframe", "settings", 
+
+{
+            "gui": {
+                "text_editor": default_text_editor_os(),
+                "start_widget": True,
+                "bind_widget": True
+            },
+            "memory": {
+                "recents": [],
+                "hsplitter_position": (300, 500),
+                "vsplitter_position": (500, 300),
+                "console_hidden": False,
+                "texteditor_hidden": False,
+                "wsize": None
+            }
+        }
+)
