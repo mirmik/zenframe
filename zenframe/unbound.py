@@ -80,11 +80,13 @@ def unbound_worker_top_half(top_half, bottom_half):
         # оптимизация достигается за счёт предварительной загрузки библиотек.
         try:
             data0 = COMMUNICATOR.simple_read()
-            data1 = COMMUNICATOR.simple_read()
-
             if Configuration.COMMUNICATOR_TRACE:
                 print_to_stderr("slep", data0)
+
+            data1 = COMMUNICATOR.simple_read()
+            if Configuration.COMMUNICATOR_TRACE:
                 print_to_stderr("slep", data1)
+
             dct0 = json.loads(data0)  # set_oposite_pid
             dct1 = json.loads(data1)  # unwait
         except Exception as ex:

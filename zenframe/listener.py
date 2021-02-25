@@ -7,14 +7,14 @@ import os
 import sys
 import signal
 
-#from zenframe.util import print_to_stderr
+from zenframe.util import print_to_stderr
 
 if sys.platform == "linux":
     import fcntl
 elif sys.platform == "win32":
     import msvcrt
     from ctypes import windll, byref, wintypes, GetLastError, WinError
-    from ctypes.wintypes import HANDLE, DWORD
+    from ctypes.wintypes import HANDLE, DWORD, BOOL, LPDWORD
     PIPE_NOWAIT = wintypes.DWORD(0x00000001)
 else:
     raise Exception("Unresolved OS error")
@@ -31,46 +31,73 @@ class Listener(QtCore.QThread):
 
     def stop(self):
         self._stop_token = True
+        if sys.platform == "win32":
+            self.terminate()
+        
 
-    def run(self):
-        print("RUN")
+    def make_file_nonblockable(self):
         if sys.platform == "linux":
             flags = fcntl.fcntl(self._file.fileno(), fcntl.F_GETFL)
             fcntl.fcntl(self._file.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
-        elif sys.platform == "win32":
-        #    h = msvcrt.get_osfhandle(self._file.fileno())
-        #    res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
-        #    if res == 0:
-        #        print("SetNamedPipeHandleState result is 0")
-        #        print(WinError())
-        #        return False
-            pass
         else:
             raise Exception("Unresolved OS error")
         
-        print("RUN2")
+
+    def run(self):
+        if sys.platform == "linux":
+            self.run_linux()
+        elif sys.platform == "win32":
+            self.run_windows()
+        else:
+            raise Exception("Unresolved OS error")
+        
+    def run_linux(self):
+        self.make_file_nonblockable()
+
         while True:
             if self._stop_token:
+                print_to_stderr("Return with stop token")
                 return
 
-            if sys.platform == "linux":
-                res = select.select([self._file.fileno()], [self._file.fileno()], [
-                                    self._file.fileno()], 0.3)
-                if (len(res[0]) == 0 and len(res[1]) == 0 and len(res[2]) == 0):
-                    continue
-            elif sys.platform == "win32":
-                pass
-            else:
-                raise Exception("Unresolved OS error")
-
+            res = select.select([self._file.fileno()], [self._file.fileno()], [
+                               self._file.fileno()], 0.3)
+            if (len(res[0]) == 0 and len(res[1]) == 0 and len(res[2]) == 0):
+                continue
+            
             while True:
-                data = self._file.readline()
+                try:
+                    data = self._file.readline()
+                except Exception as ex:
+                    print(ex)
+                    continue
+
+            
+
+                if len(data) == 1 and data == "\n":
+                    continue
                 if len(data) == 0:
                     break
                 self.newdata.emit(data)
 
                 if self.stream_handler:
                     self.stream_handler(data)
+
+    def run_windows(self):
+        while True:
+            try:
+                data = self._file.readline()
+            except Exception as ex:
+                print(ex)
+                continue
+
+            if len(data) == 1 and data == "\n":
+                continue
+            if len(data) == 0:
+                break
+            self.newdata.emit(data)
+
+            if self.stream_handler:
+                self.stream_handler(data)
 
 
 if __name__ == "__main__":
@@ -86,6 +113,8 @@ if __name__ == "__main__":
     r_file = os.fdopen(r, "r")
     w_file = os.fdopen(w, "w")
 
+    w_file.write("fsadfasdfasdf")
+
     thr = Listener(r_file)
 
     thr.start()
@@ -97,6 +126,7 @@ if __name__ == "__main__":
         print("newdata", repr(data))
 
     def do():
+        print(thr.isFinished())
         w_file.write("afsdfasdfasf\r\n 2afdasdfasdfasdf\r\n")
         w_file.flush()
 
@@ -115,6 +145,6 @@ if __name__ == "__main__":
     timer2.start(5000)
     timer2.timeout.connect(stop)
 
-    while True:
-        pass
-    # APP.exec()
+    #while True:
+    #    pass
+    APP.exec()

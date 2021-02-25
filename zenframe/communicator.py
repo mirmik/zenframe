@@ -100,7 +100,7 @@ class Communicator(QObject):
         if Configuration.COMMUNICATOR_TRACE:
             print_to_stderr("send", obj)
 
-        sendstr = json.dumps(obj) + "\r\n"
+        sendstr = json.dumps(obj) + "\n"
 
         try:
             self.ofile.write(sendstr)
