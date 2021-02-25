@@ -25,20 +25,24 @@ def top_half(communicator):
     pass
 
 
-def bottom_half(communicator, init_size, scene):
-    # display = DisplayWidget(
-    #    communicator=communicator,
-    #    init_size=init_size)
-    # display.attach_scene(scene)
-
-    # communicator.bind_handler(display.external_communication_command)
+def bottom_half(communicator, init_size):
     wdg = QtWidgets.QWidget()
+
+    lbl = QtWidgets.QLabel("ZenFrame")
+    layout = QtWidgets.QVBoxLayout()
+
+    layout.addWidget(lbl)
+    wdg.setLayout(layout)
 
     return wdg
 
 
 def frame_creator(openpath, initial_communicator, norestore, unbound):
     from zenframe.mainwindow import ZenFrame
+    from zenframe.util import create_temporary_file
+
+    if openpath is None:
+        openpath = create_temporary_file()
 
     mainwindow = ZenFrame(
     	title="zenframe",

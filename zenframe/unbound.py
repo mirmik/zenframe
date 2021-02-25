@@ -120,10 +120,10 @@ def unbound_worker_top_half(top_half, bottom_half):
                            "header": repr(ex), "tb": str(tb)})
 
 
-def unbound_worker_bottom_half(scene):
+def unbound_worker_bottom_half(*args, **kwargs):
     """Вызывается из showapi"""
 
-    widget = BOTTOM_HALF(COMMUNICATOR, PRESCALE_SIZE, scene)
+    widget = BOTTOM_HALF(COMMUNICATOR, PRESCALE_SIZE, *args, **kwargs)
 
     COMMUNICATOR.send({
         "cmd": "bindwin",

@@ -36,6 +36,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
                  restore_gui=True
                  ):
         super().__init__()
+        self.resize(800,600)
+
         self.setWindowTitle(title)
 
         # Init variables

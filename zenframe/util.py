@@ -23,6 +23,13 @@ def print_to_stderr(*args):
 
 def create_temporary_file():
     path = tempfile.mktemp(".py")
+
+    f = open(path, "w")
+    f.write(
+        "#!/usr/bin/env python3\n#coding: utf-8\n\nfrom zenframe.unbound import unbound_worker_bottom_half\n\nprint('ZenFrame')\nunbound_worker_bottom_half()\n"
+    )
+    f.close()
+
     return path
 
 
