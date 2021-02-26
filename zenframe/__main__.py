@@ -19,10 +19,10 @@ class TestWidget(QtWidgets.QWidget):
     def __init__(self, timelapse=0):
         super().__init__()
         self.timelapse = timelapse
-        lbl = QtWidgets.QLabel("ZenFrame")
+        self.lbl = QtWidgets.QLabel("ZenFrame")
         layout = QtWidgets.QVBoxLayout()
 
-        layout.addWidget(lbl)
+        layout.addWidget(self.lbl)
         self.setLayout(layout)
 
     def paintEvent(self, ev):
@@ -39,6 +39,9 @@ class TestWidget(QtWidgets.QWidget):
         print("TestWidget.resizeEvent")
         super().resizeEvent(ev)
         time.sleep(self.timelapse)
+        #self.lbl.resize(self.size())
+        #self.lbl.repaint()
+        print(self.geometry())
 
 def console_options_handle():
     parser = frame.ArgumentParser()
@@ -51,6 +54,8 @@ def top_half(communicator):
 
 
 def bottom_half(communicator, init_size, timelapse=0):
+    from PyQt5 import QtCore
+    Qt = QtCore.Qt
     wdg = TestWidget(timelapse=timelapse)
     return wdg
 
@@ -73,6 +78,14 @@ def frame_creator(openpath, initial_communicator, norestore, unbound):
 
 def main():
     pargs = console_options_handle()
+
+    if pargs.display:
+        from PyQt5 import QtWidgets, QtCore
+        app = QtWidgets.QApplication([])
+        wdg = QtWidgets.QLabel("ZenFrame")#TestWidget()
+        wdg.show()
+        
+        return app.exec()
 
     frame.invoke(
         pargs,

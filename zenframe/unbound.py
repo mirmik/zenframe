@@ -131,6 +131,7 @@ def unbound_worker_bottom_half(*args, **kwargs):
         "pid": os.getpid(),
     })
 
+    widget.window().setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
     widget.show()
     time.sleep(0.05)
 
@@ -176,7 +177,9 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
 
     time.sleep(3)
 
-    widget = widget_creator(communicator, *args, **kwargs)
+    widget = widget_creator(communicator, *args, **kwargs)    
+    widget.window().setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+
 
     communicator.oposite_clossed.connect(
         QtWidgets.QApplication.instance().quit)
