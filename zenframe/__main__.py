@@ -9,11 +9,36 @@ import psutil
 import traceback
 import runpy
 import signal
+import time
 
 import zenframe.starter as frame
 
 from PyQt5 import QtWidgets
 
+class TestWidget(QtWidgets.QWidget):
+    def __init__(self, timelapse=0):
+        super().__init__()
+        self.timelapse = timelapse
+        lbl = QtWidgets.QLabel("ZenFrame")
+        layout = QtWidgets.QVBoxLayout()
+
+        layout.addWidget(lbl)
+        self.setLayout(layout)
+
+    def paintEvent(self, ev):
+        print("TestWidget.paintEvent")
+        super().paintEvent(ev)
+        time.sleep(self.timelapse)
+
+    def showEvent(self, ev):
+        print("TestWidget.showEvent")
+        super().showEvent(ev)
+        time.sleep(self.timelapse)
+
+    def resizeEvent(self, ev):
+        print("TestWidget.resizeEvent")
+        super().resizeEvent(ev)
+        time.sleep(self.timelapse)
 
 def console_options_handle():
     parser = frame.ArgumentParser()
@@ -25,15 +50,8 @@ def top_half(communicator):
     pass
 
 
-def bottom_half(communicator, init_size):
-    wdg = QtWidgets.QWidget()
-
-    lbl = QtWidgets.QLabel("ZenFrame")
-    layout = QtWidgets.QVBoxLayout()
-
-    layout.addWidget(lbl)
-    wdg.setLayout(layout)
-
+def bottom_half(communicator, init_size, timelapse=0):
+    wdg = TestWidget(timelapse=timelapse)
     return wdg
 
 
@@ -45,8 +63,8 @@ def frame_creator(openpath, initial_communicator, norestore, unbound):
         openpath = create_temporary_file()
 
     mainwindow = ZenFrame(
-    	title="zenframe",
-    	application_name="zenframe",
+        title="zenframe",
+        application_name="zenframe",
         initial_communicator=initial_communicator,
         restore_gui=not norestore)
 
