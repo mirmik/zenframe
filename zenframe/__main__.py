@@ -39,9 +39,6 @@ class TestWidget(QtWidgets.QWidget):
         print("TestWidget.resizeEvent")
         super().resizeEvent(ev)
         time.sleep(self.timelapse)
-        #self.lbl.resize(self.size())
-        #self.lbl.repaint()
-        print(self.geometry())
 
 def console_options_handle():
     parser = frame.ArgumentParser()

@@ -171,6 +171,11 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
                 window=window,
                 widget=container)
 
+            # For Windows. 
+            # Window lost focus after createWindowContainer
+            if sys.platform == "win32":
+                self.activateWindow()
+
             self.vsplitter.replaceWidget(0, container)
 
             self.setWindowTitle(self._current_opened)
