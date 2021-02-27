@@ -22,12 +22,13 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("--unbound", action="store_true")
         self.add_argument("--display", action="store_true")
         self.add_argument("--frame", action="store_true")
-        self.add_argument("--prescale", action="store_true")
         self.add_argument("--sleeped", action="store_true",
                           help="Don't use manualy. Create sleeped thread.")
-        self.add_argument("--size")
         self.add_argument("paths", type=str, nargs="*", help="runned file")
         self.add_argument("--no-restore", action="store_true")
+
+        # NOTE: Неизвестно нужны ли параметры задания геометрии.
+        self.add_argument("--size")
 
     def parse_args(self, *args, **kwargs):
         pargs = super().parse_args(*args, **kwargs)

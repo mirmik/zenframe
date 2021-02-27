@@ -50,7 +50,7 @@ def top_half(communicator):
     pass
 
 
-def bottom_half(communicator, init_size, timelapse=0):
+def bottom_half(communicator, timelapse=0):
     from PyQt5 import QtCore
     Qt = QtCore.Qt
     wdg = TestWidget(timelapse=timelapse)

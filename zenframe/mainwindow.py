@@ -19,15 +19,21 @@ from zenframe.util import print_to_stderr
 from zenframe.settings import BaseSettings
 from zenframe.actions import ZenFrameActionsMixin
 from zenframe.finisher import invoke_destructors, terminate_all_subprocess, remove_destructor
-from zenframe.unbound import start_unbounded_worker
+from zenframe.unbound import start_unbounded_worker, start_thread_worker
+
 
 if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
 
+MAINWINDOW = None
+
+def instance():
+    return MAINWINDOW
 
 class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     """Класс реализует логику общения с подчинёнными процессами,
     управление окнами, слежение за изменениями."""
+
 
     def __init__(self,
                  title,
@@ -35,10 +41,17 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
                  initial_communicator=None,
                  restore_gui=True
                  ):
+        global MAINWINDOW
+        MAINWINDOW = self
+
         super().__init__()
         self.resize(800,600)
 
         self.setWindowTitle(title)
+
+        # MODES
+        self.use_threads = False
+        self.use_sleeped_process = True
 
         # Init variables
         self._openlock = QtCore.QMutex(QtCore.QMutex.Recursive)
@@ -67,7 +80,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             self._clients[initial_pid] = self._initial_client
             self._keep_alive_pids.append(initial_pid)
 
-        self._sleeped_client = self.spawn(self._application_name)
+        if self.use_sleeped_process:
+            self._sleeped_client = self.spawn_process(self._application_name)
 
         self.init_central_widget()
         if restore_gui:
@@ -79,7 +93,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         # Bind signals
         self.init_changes_notifier(self.reopen_current)
 
-    def spawn(self, application_name):
+    def spawn_process(self, application_name):
         return start_unbounded_worker(application_name=application_name)
 
     def set_retransler(self, retransler):
@@ -92,7 +106,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         if self._sleeped_client:
             self._sleeped_client.terminate()
 
-        self._sleeped_client = self.spawn(sleeped=True)
+        self._sleeped_client = self.spawn_process(sleeped=True)
 
     def init_central_widget(self):
         self.console = ConsoleWidget()
@@ -189,6 +203,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.subprocess_finalization_do()
         self._openlock.unlock()
 
+
+
     def synchronize_subprocess_state(self):
         size = self.vsplitter.widget(0).size()
         self._current_client.communicator.send({
@@ -274,18 +290,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.notifier.clear()
         self.notifier.add_target(openpath)
 
-        if True:  # sleeped optimization
-            client = self._sleeped_client
-            size = self.vsplitter.widget(0).size()
-            size = "{},{}".format(size.width(), size.height())
-            client.communicator.send({
-                "cmd": "unsleep",
-                "path": openpath,
-                "need_prescale": True,
-                "size": size
-            })
-
-            self._sleeped_client = self.spawn(self._application_name)
+        client = self.start_new_client(openpath)
 
         self._current_client = client
         self._clients[client.pid()] = client
@@ -299,6 +304,24 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.setWindowTitle(self._current_opened)
         self.openStartEvent(openpath)
         self._openlock.unlock()
+
+    def start_new_client(self, openpath):
+        if self.use_threads:
+            return start_thread_worker(openpath)
+
+        if self.use_sleeped_process:
+            client = self._sleeped_client
+            self._sleeped_client = self.spawn_process(self._application_name)
+        else:
+            client = self.spawn_process(self._application_name)
+
+        client.communicator.send({
+            "cmd": "unsleep",
+            "path": openpath
+        })
+
+        return client
+
 
     def openStartEvent(self, path):
         pass
@@ -350,3 +373,14 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
     def internal_console_request(self, data):
         self.console.write(data)
+
+#TEST
+    @QtCore.pyqtSlot()
+    def hello(self):
+        print("hello")
+        import zenframe.unbound
+        zenframe.unbound.BOTTOM_HALF_TEST()
+    def bind_thread_widget(self, wdg):
+        #wdg.show()
+        #wdg.moveToThread(QtWidgets.QApplication.instance().thread())
+        self.vsplitter.replaceWidget(0, wdg)

@@ -23,6 +23,10 @@ PRESCALE_SIZE = None
 BOTTOM_HALF = None
 UNBOUND_MODE = False
 
+# TEST
+THREAD_MODE = False
+BOTTOM_HALF_TEST = None
+
 if Configuration.FILTER_QT_WARNINGS:
     QtCore.QLoggingCategory.setFilterRules('qt.qpa.xcb=false')
 
@@ -96,8 +100,7 @@ def unbound_worker_top_half(top_half, bottom_half):
 
         COMMUNICATOR.declared_opposite_pid = int(dct0["data"])
         path = dct1["path"]
-        PRESCALE_SIZE = list((int(a) for a in dct1["size"].split(",")))
-
+        
     COMMUNICATOR.oposite_clossed.connect(
         QtWidgets.QApplication.instance().quit)
 
@@ -123,7 +126,10 @@ def unbound_worker_top_half(top_half, bottom_half):
 def unbound_worker_bottom_half(*args, **kwargs):
     """Вызывается из showapi"""
 
-    widget = BOTTOM_HALF(COMMUNICATOR, PRESCALE_SIZE, *args, **kwargs)
+    widget = BOTTOM_HALF(COMMUNICATOR, *args, **kwargs)
+
+    if THREAD_MODE:
+        return worker_thread_mode_impl(widget)
 
     COMMUNICATOR.send({
         "cmd": "bindwin",
@@ -212,3 +218,65 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
     QtWidgets.QApplication.instance().exec()
+
+
+# TEST
+def test_bottom_half_2(*args, **kwargs):
+    import zenframe.mainwindow
+    wdg = QtWidgets.QLabel("ThreadMode!!!!")
+    zenframe.mainwindow.instance().bind_thread_widget(wdg)
+
+def test_bottom_half(*args, **kwargs):
+    print("test_bottom_half!!!")
+
+class ThreadExecutor(QtCore.QThread):
+    def __init__(self, w, r, openpath):
+        super().__init__()
+        self.w_fd = w
+        self.r_fd = r
+        self.w = io.TextIOWrapper(os.fdopen(self.w_fd, "wb"), line_buffering=True)
+        self.r = io.TextIOWrapper(os.fdopen(self.r_fd, "rb"), line_buffering=True)
+        self.openpath = openpath
+
+
+    def run(self):
+        print("run")
+        self.communicator = Communicator(self.r, self.w)
+        self.communicator.start_listen()
+
+        global COMMUNICATOR 
+        COMMUNICATOR = self.communicator
+
+        global BOTTOM_HALF, THREAD_MODE
+        BOTTOM_HALF = test_bottom_half
+        THREAD_MODE = True
+
+        try:
+            runpy.run_path(self.openpath, run_name="__main__")
+        except Exception as ex:
+            tb = traceback.format_exc()
+            self.communicator.send({"cmd": "except", "path": self.openpath,
+                               "header": repr(ex), "tb": str(tb)})
+
+def worker_thread_mode_impl(wdg):
+    import zenframe.mainwindow
+    global BOTTOM_HALF_TEST
+    BOTTOM_HALF_TEST = test_bottom_half_2
+    QtCore.QMetaObject.invokeMethod(zenframe.mainwindow.instance(), "hello", QtCore.Qt.QueuedConnection)
+    print("worker_thread_mode_impl")
+
+#    dispatchToMainThread(test_bottom_half_2)
+
+def start_thread_worker(openpath):
+    main_r, thread_w = os.pipe()    
+    thread_r, main_w = os.pipe()    
+    
+    thr = ThreadExecutor(w=thread_w, r=thread_r, openpath=openpath)
+
+    w = io.TextIOWrapper(os.fdopen(main_w, "wb"), line_buffering=True)
+    r = io.TextIOWrapper(os.fdopen(main_r, "rb"), line_buffering=True)
+
+    communicator = Communicator(r, w)
+
+    thr.start()
+    return Client(communicator, thread=thr)

@@ -56,7 +56,6 @@ class Listener(QtCore.QThread):
 
         while True:
             if self._stop_token:
-                print_to_stderr("Return with stop token")
                 return
 
             res = select.select([self._file.fileno()], [self._file.fileno()], [
