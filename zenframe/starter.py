@@ -4,6 +4,7 @@ import traceback
 import sys
 import json
 import time
+import runpy
 
 import zenframe.util
 from zenframe.finisher import terminate_all_subprocess, invoke_destructors, setup_interrupt_handlers
@@ -26,6 +27,7 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="Don't use manualy. Create sleeped thread.")
         self.add_argument("paths", type=str, nargs="*", help="runned file")
         self.add_argument("--no-restore", action="store_true")
+        self.add_argument("--no-show", action="store_true")
 
         # NOTE: Неизвестно нужны ли параметры задания геометрии.
         self.add_argument("--size")
@@ -55,6 +57,11 @@ def invoke(pargs, frame_creator, exec_top_half, exec_bottom_half):
             pargs.paths[0] = protect_path(pargs.paths[0])
 
         if pargs.display:
+            exec_worker_only(pargs)
+
+        if pargs.no_show:
+            import zencad.showapi
+            zencad.showapi.NOSHOW = True
             exec_worker_only(pargs)
 
         elif pargs.unbound:
@@ -137,7 +144,7 @@ def start_application(frame_creator, openpath=None, unbound=False, norestore=Fal
         openpath, initial_communicator, norestore, unbound)
 
     if unbound:
-        initial_communicator.bind_handler(MAINWINDOW.new_worker_message)
+        initial_communicator.bind_handler(MAINWINDOW.message_handler)
         initial_communicator.start_listen()
 
         MAINWINDOW.set_retransler(retransler)
