@@ -100,7 +100,7 @@ def unbound_worker_top_half(top_half, bottom_half):
 
         COMMUNICATOR.declared_opposite_pid = int(dct0["data"])
         path = dct1["path"]
-        
+
     COMMUNICATOR.oposite_clossed.connect(
         QtWidgets.QApplication.instance().quit)
 
@@ -183,9 +183,8 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
 
     time.sleep(3)
 
-    widget = widget_creator(communicator, *args, **kwargs)    
+    widget = widget_creator(communicator, *args, **kwargs)
     widget.window().setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
-
 
     communicator.oposite_clossed.connect(
         QtWidgets.QApplication.instance().quit)
@@ -226,25 +225,28 @@ def test_bottom_half_2(*args, **kwargs):
     wdg = QtWidgets.QLabel("ThreadMode!!!!")
     zenframe.mainwindow.instance().bind_thread_widget(wdg)
 
+
 def test_bottom_half(*args, **kwargs):
     print("test_bottom_half!!!")
+
 
 class ThreadExecutor(QtCore.QThread):
     def __init__(self, w, r, openpath):
         super().__init__()
         self.w_fd = w
         self.r_fd = r
-        self.w = io.TextIOWrapper(os.fdopen(self.w_fd, "wb"), line_buffering=True)
-        self.r = io.TextIOWrapper(os.fdopen(self.r_fd, "rb"), line_buffering=True)
+        self.w = io.TextIOWrapper(
+            os.fdopen(self.w_fd, "wb"), line_buffering=True)
+        self.r = io.TextIOWrapper(
+            os.fdopen(self.r_fd, "rb"), line_buffering=True)
         self.openpath = openpath
-
 
     def run(self):
         print("run")
         self.communicator = Communicator(self.r, self.w)
         self.communicator.start_listen()
 
-        global COMMUNICATOR 
+        global COMMUNICATOR
         COMMUNICATOR = self.communicator
 
         global BOTTOM_HALF, THREAD_MODE
@@ -256,21 +258,24 @@ class ThreadExecutor(QtCore.QThread):
         except Exception as ex:
             tb = traceback.format_exc()
             self.communicator.send({"cmd": "except", "path": self.openpath,
-                               "header": repr(ex), "tb": str(tb)})
+                                    "header": repr(ex), "tb": str(tb)})
+
 
 def worker_thread_mode_impl(wdg):
     import zenframe.mainwindow
     global BOTTOM_HALF_TEST
     BOTTOM_HALF_TEST = test_bottom_half_2
-    QtCore.QMetaObject.invokeMethod(zenframe.mainwindow.instance(), "hello", QtCore.Qt.QueuedConnection)
+    QtCore.QMetaObject.invokeMethod(
+        zenframe.mainwindow.instance(), "hello", QtCore.Qt.QueuedConnection)
     print("worker_thread_mode_impl")
 
 #    dispatchToMainThread(test_bottom_half_2)
 
+
 def start_thread_worker(openpath):
-    main_r, thread_w = os.pipe()    
-    thread_r, main_w = os.pipe()    
-    
+    main_r, thread_w = os.pipe()
+    thread_r, main_w = os.pipe()
+
     thr = ThreadExecutor(w=thread_w, r=thread_r, openpath=openpath)
 
     w = io.TextIOWrapper(os.fdopen(main_w, "wb"), line_buffering=True)

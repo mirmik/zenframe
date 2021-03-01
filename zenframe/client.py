@@ -9,7 +9,7 @@ class Client:
         self.subprocess = subprocess
         self.embeded_window = None
         self.embeded_widget = None
-        self.thread_mode = thread 
+        self.thread_mode = thread
 
     def set_embed(self, window, widget):
         self.embeded_window = window

@@ -89,7 +89,6 @@ class Communicator(QObject):
         self.ifile.close()
         self.ofile.close()
 
-
     #    flag = fcntl.fcntl(self.ifile.fileno(), fcntl.F_GETFL)
     #    fcntl.fcntl(self.ifile.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
     #

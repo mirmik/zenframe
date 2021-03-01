@@ -27,13 +27,14 @@ if Configuration.FILTER_QT_WARNINGS:
 
 MAINWINDOW = None
 
+
 def instance():
     return MAINWINDOW
+
 
 class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     """Класс реализует логику общения с подчинёнными процессами,
     управление окнами, слежение за изменениями."""
-
 
     def __init__(self,
                  title,
@@ -45,7 +46,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         MAINWINDOW = self
 
         super().__init__()
-        self.resize(800,600)
+        self.resize(800, 600)
 
         self.setWindowTitle(title)
 
@@ -185,7 +186,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
                 window=window,
                 widget=container)
 
-            # For Windows. 
+            # For Windows.
             # Window lost focus after createWindowContainer
             if sys.platform == "win32":
                 self.activateWindow()
@@ -202,8 +203,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
         self.subprocess_finalization_do()
         self._openlock.unlock()
-
-
 
     def synchronize_subprocess_state(self):
         size = self.vsplitter.widget(0).size()
@@ -322,7 +321,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
         return client
 
-
     def openStartEvent(self, path):
         pass
 
@@ -374,13 +372,14 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     def internal_console_request(self, data):
         self.console.write(data)
 
-#TEST
+# TEST
     @QtCore.pyqtSlot()
     def hello(self):
         print("hello")
         import zenframe.unbound
         zenframe.unbound.BOTTOM_HALF_TEST()
+
     def bind_thread_widget(self, wdg):
-        #wdg.show()
-        #wdg.moveToThread(QtWidgets.QApplication.instance().thread())
+        # wdg.show()
+        # wdg.moveToThread(QtWidgets.QApplication.instance().thread())
         self.vsplitter.replaceWidget(0, wdg)

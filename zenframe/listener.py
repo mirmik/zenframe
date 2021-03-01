@@ -33,15 +33,14 @@ class Listener(QtCore.QThread):
         self._stop_token = True
         if sys.platform == "win32":
             self.terminate()
-        
 
     def make_file_nonblockable(self):
         if sys.platform == "linux":
             flags = fcntl.fcntl(self._file.fileno(), fcntl.F_GETFL)
-            fcntl.fcntl(self._file.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+            fcntl.fcntl(self._file.fileno(), fcntl.F_SETFL,
+                        flags | os.O_NONBLOCK)
         else:
             raise Exception("Unresolved OS error")
-        
 
     def run(self):
         if sys.platform == "linux":
@@ -50,7 +49,7 @@ class Listener(QtCore.QThread):
             self.run_windows()
         else:
             raise Exception("Unresolved OS error")
-        
+
     def run_linux(self):
         self.make_file_nonblockable()
 
@@ -59,18 +58,16 @@ class Listener(QtCore.QThread):
                 return
 
             res = select.select([self._file.fileno()], [self._file.fileno()], [
-                               self._file.fileno()], 0.3)
+                self._file.fileno()], 0.3)
             if (len(res[0]) == 0 and len(res[1]) == 0 and len(res[2]) == 0):
                 continue
-            
+
             while True:
                 try:
                     data = self._file.readline()
                 except Exception as ex:
                     print(ex)
                     continue
-
-            
 
                 if len(data) == 1 and data == "\n":
                     continue
@@ -144,6 +141,6 @@ if __name__ == "__main__":
     timer2.start(5000)
     timer2.timeout.connect(stop)
 
-    #while True:
+    # while True:
     #    pass
     APP.exec()
