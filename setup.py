@@ -11,15 +11,15 @@ import os
 directory = os.path.dirname(os.path.realpath(__file__))
 
 requires = [
-        "evalcache>=1.11.0",
-        "PyQt5!=5.14.1",
-        "psutil"
-    ] 
+    "evalcache>=1.11.0",
+    "PyQt5!=5.14.1",
+    "psutil"
+]
 
 setup(
     name="zenframe",
     packages=["zenframe"],
-    version="0.1.0",
+    version="0.2.0",
     license="MIT",
     description="Sandbox for computationally-graphical scripts",
     author="mirmik",
