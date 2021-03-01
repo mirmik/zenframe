@@ -27,12 +27,7 @@ def invoke(pargs, frame_creator, exec_top_half, exec_bottom_half):
         if len(pargs.paths) > 0:
             pargs.paths[0] = protect_path(pargs.paths[0])
 
-        if pargs.display:
-            exec_worker_only(pargs)
-
-        if pargs.no_show:
-            import zencad.showapi
-            zencad.showapi.NOSHOW = True
+        if pargs.display or pargs.no_show:
             exec_worker_only(pargs)
 
         elif pargs.unbound:
@@ -72,6 +67,10 @@ def exec_frame_process(pargs, frame_creator):
 def exec_worker_only(pargs):
     """ Режим запускает один единственный виджет.
         Простой режим, никакой ретрансляции команд, никаких биндов. """
+    from zenframe.configuration import Configuration
+
+    if pargs.no_show:
+        Configuration.NOSHOW = True
 
     if len(pargs.paths) != 1:
         raise Exception("Display mode invoked without path")
