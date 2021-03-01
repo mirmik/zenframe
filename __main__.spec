@@ -4,11 +4,11 @@ block_cipher = None
 
 datas = []
 
-a = Analysis(['zencad/__main__.py'],
-             pathex=['/home/mirmik/project/zencad', '/home/mirmik/project/zenframe'],
+a = Analysis(['zenframe/__main__.py'],
+             pathex=['/home/mirmik/project/zenframe'],
              binaries=[],
              datas=datas,
-             hiddenimports=["zenframe"],
+             hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
