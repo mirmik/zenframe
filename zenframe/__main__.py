@@ -12,8 +12,10 @@ import signal
 import time
 
 import zenframe.starter as frame
+import zenframe.argparse
 
 from PyQt5 import QtWidgets
+
 
 class TestWidget(QtWidgets.QWidget):
     def __init__(self, timelapse=0):
@@ -40,8 +42,9 @@ class TestWidget(QtWidgets.QWidget):
         super().resizeEvent(ev)
         time.sleep(self.timelapse)
 
+
 def console_options_handle():
-    parser = frame.ArgumentParser()
+    parser = zenframe.argparse.ArgumentParser()
     pargs = parser.parse_args()
     return pargs
 
@@ -79,9 +82,9 @@ def main():
     if pargs.display:
         from PyQt5 import QtWidgets, QtCore
         app = QtWidgets.QApplication([])
-        wdg = QtWidgets.QLabel("ZenFrame")#TestWidget()
+        wdg = QtWidgets.QLabel("ZenFrame")  # TestWidget()
         wdg.show()
-        
+
         return app.exec()
 
     frame.invoke(

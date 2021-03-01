@@ -2,9 +2,9 @@ import os
 import sys
 import tempfile
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+#from PyQt5.QtWidgets import *
+#from PyQt5.QtCore import *
+#from PyQt5.QtGui import *
 
 DEBUG_PROCESS_NAME = os.getpid()
 
@@ -34,6 +34,8 @@ def create_temporary_file():
 
 
 def open_file_dialog(parent, directory=""):
+    from PyQt5.QtWidgets import QFileDialog
+
     filters = "*.py;;*.*"
     defaultFilter = "*.py"
 
@@ -48,6 +50,8 @@ def open_file_dialog(parent, directory=""):
 
 
 def save_file_dialog(parent):
+    from PyQt5.QtWidgets import QFileDialog
+
     filters = "*.py;;*.*"
     defaultFilter = "*.py"
 
