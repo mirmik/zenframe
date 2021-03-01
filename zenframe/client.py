@@ -1,5 +1,7 @@
 from zenframe.util import print_to_stderr
 
+# NOTE: При работе с pyinstaller pid возвращаемый с submodule отличается от declared_pid
+
 
 class Client:
     """ Хранит объекты, связанные с управлением одним клиентом. """
@@ -23,6 +25,9 @@ class Client:
             return self.subprocess.pid
         else:
             return self.communicator.declared_opposite_pid
+
+    def declared_pid(self):
+        return self.communicator.declared_opposite_pid
 
     def send(self, *args, **kwargs):
         return self.communicator.send(*args, **kwargs)

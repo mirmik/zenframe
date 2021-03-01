@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from zenframe.configuration import Configuration
 
@@ -16,6 +17,7 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="Don't use manualy. Create sleeped thread.")
         self.add_argument("paths", type=str, nargs="*", help="runned file")
         self.add_argument("--no-restore", action="store_true")
+        self.add_argument("-m")  # for pyinstaller compatible
 
         # NOTE: Неизвестно нужны ли параметры задания геометрии.
         self.add_argument("--size")

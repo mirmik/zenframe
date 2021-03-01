@@ -166,12 +166,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         return self._current_opened
 
     def bind_window(self, winid, pid):
-        if self._current_client.pid() != pid:
-            """Если заявленный pid отправителя не совпадает с pid текущего коммуникатора,
-            то бинд уже неактуален."""
-            print("Nonactual bind")
-            return
-
         if not self._openlock.tryLock():
             return
 
@@ -347,7 +341,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         except:
             return False
 
-        if procpid != self._current_client.pid() and data["cmd"] != "finish_screen":
+        if procpid != self._current_client.declared_pid() and data["cmd"] != "finish_screen":
             return False
 
         if cmd == 'bindwin':
