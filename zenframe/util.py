@@ -21,11 +21,8 @@ def print_to_stderr(*args):
     sys.stderr.flush()
 
 
-def create_temporary_file(template=None):
+def create_temporary_file(template):
     path = tempfile.mktemp(".py")
-
-    if template is None:
-        template = "#!/usr/bin/env python3\n#coding: utf-8\n\nfrom zenframe.unbound import unbound_worker_bottom_half\n\nprint('ZenFrame')\nunbound_worker_bottom_half()\n"
 
     f = open(path, "w")
     f.write(template)

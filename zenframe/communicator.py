@@ -80,10 +80,12 @@ class Communicator(QObject):
         self._listener.stream_handler = self.newdata_handler
         self._listener.start()
 
-    def stop_listen(self):
+    def stop_listen(self, nowait=False):
         if self._listener:
             self._listener.stop()
-            self._listener.wait()
+
+            if not nowait:
+                self._listener.wait()
 
     def close(self):
         self.ifile.close()

@@ -284,6 +284,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.notifier.add_target(openpath)
 
         client = self.start_new_client(openpath)
+        oldclient = self._current_client
 
         self._current_client = client
         self._clients[client.pid()] = client
@@ -292,6 +293,9 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self._current_client.communicator.start_listen()
 
         self.enable_display_changed_mode()
+
+        if oldclient:
+            oldclient.terminate_only()
 
         self.console.clear()
         self.setWindowTitle(self._current_opened)
@@ -334,6 +338,9 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     def open_declared(self, path):
         self._current_opened = path
         self.texteditor.open(path)
+
+        self.notifier.clear()
+        self.notifier.add_target(openpath)
 
     def message_handler(self, data, procpid):
         try:

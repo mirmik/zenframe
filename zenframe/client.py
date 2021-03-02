@@ -32,12 +32,15 @@ class Client:
     def send(self, *args, **kwargs):
         return self.communicator.send(*args, **kwargs)
 
-    def terminate(self):
+    def terminate(self, nowait=False):
         if self.thread_mode:
-            self.communicator.stop_listen()
+            self.communicator.stop_listen(nowait=nowait)
             self.communicator.close()
             return
 
-        self.communicator.stop_listen()
+        self.communicator.stop_listen(nowait=nowait)
         self.communicator.close()
+        self.subprocess.terminate()
+
+    def terminate_only(self):
         self.subprocess.terminate()

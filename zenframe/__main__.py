@@ -16,6 +16,24 @@ import zenframe.argparse
 
 from PyQt5 import QtWidgets
 
+TEMPLATE = """
+#!/usr/bin/env python3
+#coding: utf-8
+
+from zenframe.animate import create_animate_thread
+from zenframe.unbound import unbound_worker_bottom_half
+
+i = 0
+def animate(*args, **kwargs):
+    global i
+    print("animate ", i)
+    i += 1
+
+print('ZenFrame')
+create_animate_thread(animate, step=1, debug_mode=True)
+unbound_worker_bottom_half()
+"""
+
 
 class TestWidget(QtWidgets.QWidget):
     def __init__(self, timelapse=0):
@@ -65,7 +83,7 @@ def frame_creator(openpath, initial_communicator, norestore, unbound):
     from zenframe.util import create_temporary_file
 
     if openpath is None:
-        openpath = create_temporary_file()
+        openpath = create_temporary_file(TEMPLATE)
 
     mainwindow = ZenFrame(
         title="zenframe",
