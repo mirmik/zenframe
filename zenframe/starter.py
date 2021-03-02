@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import runpy
+import os
 
 import zenframe.util
 from zenframe.finisher import terminate_all_subprocess, invoke_destructors, setup_interrupt_handlers
@@ -75,7 +76,15 @@ def exec_worker_only(pargs):
     if len(pargs.paths) != 1:
         raise Exception("Display mode invoked without path")
 
-    runpy.run_path(pargs.paths[0], run_name="__main__")
+    path = pargs.paths[0]
+
+    # Меняем директорию, чтобы скрипт мог подключать зависимые модули.
+    path = os.path.abspath(path)
+    directory = os.path.dirname(os.path.abspath(path))
+    os.chdir(directory)
+    sys.path.append(directory)
+
+    runpy.run_path(path, run_name="__main__")
 
 
 def exec_worker_unbound(pargs, top_half, bottom_half):
