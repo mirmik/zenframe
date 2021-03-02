@@ -130,12 +130,22 @@ class ZenFrameActionsMixin:
             ),
         )
 
+    def create_new_do(self, path):
+        from zenframe.configuration import Configuration
+        f = open(path, "w")
+        f.write(Configuration.TEMPLATE)
+        f.close()
+        self.open(path)
+
     def createNewAction(self):
         filters = "*.py;;*.*"
         defaultFilter = "*.py"
 
+        curopen = self.current_opened()
         path = QFileDialog.getSaveFileName(
-            self, "Create New File", self.laststartpath, filters, defaultFilter
+            self, "Create New File",
+            None if curopen is None else os.path.dirname(curopen),
+            filters, defaultFilter
         )
 
         if path[0] == "":
