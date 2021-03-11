@@ -340,7 +340,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         self.texteditor.open(path)
 
         self.notifier.clear()
-        self.notifier.add_target(openpath)
+        self.notifier.add_target(path)
 
     def message_handler(self, data, procpid):
         try:
