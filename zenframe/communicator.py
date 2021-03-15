@@ -61,6 +61,9 @@ class Communicator(QObject):
             self.newdata.emit(unwraped_data, self.declared_opposite_pid)
 
         except Exception as ex:
+            if Configuration.DROP_COMMUNICATOR_INVALIDE_DATA:
+                return
+
             print_to_stderr(ex)
             sys.exit()
 
@@ -90,17 +93,6 @@ class Communicator(QObject):
     def close(self):
         self.ifile.close()
         self.ofile.close()
-
-    #    flag = fcntl.fcntl(self.ifile.fileno(), fcntl.F_GETFL)
-    #    fcntl.fcntl(self.ifile.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
-    #
-    #    self.sock_notifier = QtCore.QSocketNotifier(
-    #        self.ifile.fileno(),
-    #        QtCore.QSocketNotifier.Read,
-    #        self
-    #    )
-#
-    #    self.sock_notifier.activated.connect(self.socket_notifier_handle)
 
     def send(self, obj):
         if Configuration.COMMUNICATOR_TRACE:
