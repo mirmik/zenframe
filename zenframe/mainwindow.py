@@ -107,7 +107,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         if self._sleeped_client:
             self._sleeped_client.terminate()
 
-        self._sleeped_client = self.spawn_process(sleeped=True)
+        self._sleeped_client = self.spawn_process(self._application_name)
 
     def init_central_widget(self):
         self.console = ConsoleWidget()
