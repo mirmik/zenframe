@@ -323,6 +323,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         pass
 
     def internal_key_pressed_raw(self, key, modifiers, text):
+        self.activateWindow()
         self.texteditor.setFocus()
         modifiers = QtCore.Qt.KeyboardModifiers()
         event = QtGui.QKeyEvent(
@@ -330,6 +331,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         QtGui.QGuiApplication.postEvent(self.texteditor, event)
 
     def internal_key_released_raw(self, key, modifiers):
+        self.activateWindow()
+        self.texteditor.setFocus()
         modifiers = QtCore.Qt.KeyboardModifiers()
         event = QtGui.QKeyEvent(QtCore.QEvent.KeyRelease,
                                 key, QtCore.Qt.KeyboardModifier(modifiers))
