@@ -231,6 +231,9 @@ class ZenFrameActionsMixin:
         self.display_mode_enable(
             not (self.texteditor.isHidden() or self.console.isHidden()))
 
+        if not self.texteditor.isHidden():
+            self.texteditor.setFocus()
+
     def auto_update(self, en):
         if en:
             self.notifier.control_unlock()
