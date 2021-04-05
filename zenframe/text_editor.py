@@ -271,7 +271,7 @@ class TextEditor(QPlainTextEdit):
     def save(self):
         self.last_save = time.time()
         try:
-            f = open(self.edited, "w")
+            f = open(self.edited, "w", encoding="utf-8")
             self.rewrite = self.edited
         except IOError as e:
             print("cannot open {} for write: {}".format(self.edited, e))
@@ -281,7 +281,7 @@ class TextEditor(QPlainTextEdit):
 
     def save_as(self, path):
         try:
-            f = open(path, "w")
+            f = open(path, "w", encoding="utf-8")
             self.rewrite = path
             self.edited = path
         except IOError as e:
@@ -298,7 +298,7 @@ class TextEditor(QPlainTextEdit):
         self.update_text_field()
 
     def update_text_field(self):
-        filetext = open(self.edited).read()
+        filetext = open(self.edited, "r", encoding="utf-8").read()
         self.setPlainText(filetext)
 
     def reopen(self):
