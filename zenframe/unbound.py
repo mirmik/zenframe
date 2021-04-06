@@ -62,7 +62,9 @@ def unbound_worker_top_half(top_half, bottom_half):
     BOTTOM_HALF = bottom_half
     UNBOUND_MODE = True
 
-    QAPP = QtWidgets.QApplication([])
+    QAPP = QtWidgets.QApplication.instance()
+    if QAPP is None:
+        QAPP = QtWidgets.QApplication([])
 
     # Переопределяем дескрипторы, чтобы стандартный поток вывода пошёл
     # через ретранслятор. Теперь все консольные сообщения будуут обвешиваться
@@ -176,7 +178,10 @@ def start_unbounded_frame(path, application_name):
 
 
 def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
-    QAPP = QtWidgets.QApplication([])
+    QAPP = QtWidgets.QApplication.instance()
+    if QAPP is None:
+        QAPP = QtWidgets.QApplication([])
+
     CONSOLE_FILTER = ConsoleRetransler(sys.stdout, without_wrap=True)
     CONSOLE_FILTER.start_listen()
 
