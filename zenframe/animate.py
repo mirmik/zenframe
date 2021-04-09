@@ -11,6 +11,7 @@ import zenframe
 
 class AnimateThread(QThread):
     after_update_signal = pyqtSignal()
+    ANIMATE_THREADS = []
 
     def __init__(self, updater, step, debug_mode=False):
         QThread.__init__(self)
@@ -19,7 +20,13 @@ class AnimateThread(QThread):
         self.step = step
         self.debug_mode = debug_mode
 
+        self.ANIMATE_THREADS.append(self)
         zenframe.finisher.register_destructor(self, self.finish)
+
+    @classmethod
+    def start_all_threads(cls):
+        for a in cls.ANIMATE_THREADS:
+            a.start()
 
     def finish(self):
         if self.debug_mode:

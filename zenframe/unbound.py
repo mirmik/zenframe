@@ -16,6 +16,7 @@ from zenframe.communicator import Communicator
 from zenframe.client import Client
 from zenframe.configuration import Configuration
 from zenframe.finisher import invoke_destructors
+from zenframe.animate import AnimateThread
 
 COMMUNICATOR = None
 RETRANSLER = None
@@ -148,6 +149,7 @@ def unbound_worker_bottom_half(*args, **kwargs):
     timer.start(Configuration.TIMER_PULSE * 1000)
     timer.timeout.connect(lambda: None)
 
+    AnimateThread.start_all_threads()
     QtWidgets.QApplication.instance().exec()
 
 
@@ -222,6 +224,7 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
+    AnimateThread.start_all_threads()
     QtWidgets.QApplication.instance().exec()
 
 

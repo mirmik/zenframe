@@ -43,4 +43,5 @@ class Client:
         self.subprocess.terminate()
 
     def terminate_only(self):
-        self.subprocess.terminate()
+        if self.subprocess:
+            self.subprocess.terminate()

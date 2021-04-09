@@ -190,6 +190,9 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
             self.setWindowTitle(self._current_opened)
             self.synchronize_subprocess_state()
 
+            # time.sleep(0.01)
+            # self.resize(self.size())
+
         except Exception as ex:
             self._openlock.unlock()
             print_to_stderr("exception on window bind", ex)
