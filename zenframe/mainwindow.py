@@ -390,3 +390,8 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         # wdg.show()
         # wdg.moveToThread(QtWidgets.QApplication.instance().thread())
         self.vsplitter.replaceWidget(0, wdg)
+
+    def openStartEvent(self, path):
+        """ Добавляем путь в список последних вызовов."""
+        BaseSettings.instance().add_recent(os.path.abspath(path))
+        self.update_recent_menu()

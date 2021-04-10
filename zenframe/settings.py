@@ -1,5 +1,6 @@
 from PyQt5.QtCore import *
 import sys
+import os
 
 
 def default_text_editor_os():
@@ -77,25 +78,55 @@ class BaseSettings:
 
     @classmethod
     def instance(self):
+        if self._instance is None:
+            BaseSettings("zenframe", "settings",
+
+                         {
+                             "gui": {
+                                 "text_editor": default_text_editor_os(),
+                                 "start_widget": True,
+                                 "bind_widget": True
+                             },
+                             "memory": {
+                                 "recents": [],
+                                 "hsplitter_position": (300, 500),
+                                 "vsplitter_position": (500, 300),
+                                 "console_hidden": False,
+                                 "texteditor_hidden": False,
+                                 "wsize": None
+                             }
+                         }
+                         )
+            self._instance.restore()
+
         return self._instance
 
+    def get_recent(self):
+        if self.list_of_settings["memory"]["recents"] is None:
+            self.list_of_settings["memory"]["recents"] = []
 
-# if not reimplemented
-BaseSettings("zenframe", "settings",
+        self.clear_deleted_recent()
+        return self.list_of_settings["memory"]["recents"]
 
-             {
-                 "gui": {
-                     "text_editor": default_text_editor_os(),
-                     "start_widget": True,
-                     "bind_widget": True
-                 },
-                 "memory": {
-                     "recents": [],
-                     "hsplitter_position": (300, 500),
-                     "vsplitter_position": (500, 300),
-                     "console_hidden": False,
-                     "texteditor_hidden": False,
-                     "wsize": None
-                 }
-             }
-             )
+    def add_recent(self, added):
+        while added in self.list_of_settings["memory"]["recents"]:
+            self.list_of_settings["memory"]["recents"].remove(added)
+
+        self.list_of_settings["memory"]["recents"] = [
+            added] + self.list_of_settings["memory"]["recents"]
+        if len(self.list_of_settings["memory"]["recents"]) > 10:
+            self.list_of_settings["memory"]["recents"] = self.list_of_settings["memory"]["recents"][:10]
+
+        self.store()
+
+    def clear_deleted_recent(self):
+        recents = self.list_of_settings["memory"]["recents"]
+        need_store = False
+
+        for r in recents:
+            if not os.path.exists(r) or not os.path.isfile(r):
+                self.list_of_settings["memory"]["recents"].remove(r)
+                need_store = True
+
+        if need_store:
+            self.store()

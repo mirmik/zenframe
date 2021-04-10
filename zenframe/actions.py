@@ -89,6 +89,9 @@ class ZenFrameActionsMixin:
         self.mFileMenu = self.menuBar().addMenu(self.tr("&File"))
         self.add_new_create_open_standart_actions()
         self.mFileMenu.addSeparator()
+        self.recentMenu = self.mFileMenu.addMenu("Recent")
+        self._init_recent_menu(self.recentMenu)
+        self.mFileMenu.addSeparator()
         self.add_exit_standart_action()
 
         self.mEditMenu = self.menuBar().addMenu(self.tr("&Edit"))
@@ -129,6 +132,20 @@ class ZenFrameActionsMixin:
                 "<p>HelloWorld"
             ),
         )
+
+    def _init_recent_menu(self, menu):
+        def _add_open_action(menu, name, path):
+            def callback():
+                self.open(path)
+
+            menu.addAction(self.create_action(name, callback, path))
+
+        for l in BaseSettings.instance().get_recent():
+            _add_open_action(menu, os.path.basename(l), l)
+
+    def update_recent_menu(self):
+        self.recentMenu.clear()
+        self._init_recent_menu(self.recentMenu)
 
     def create_new_do(self, path):
         from zenframe.configuration import Configuration
