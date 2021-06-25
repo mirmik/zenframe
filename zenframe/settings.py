@@ -1,4 +1,4 @@
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QSettings
 import sys
 import os
 
@@ -57,7 +57,7 @@ class BaseSettings:
             try:
                 if float(val):
                     return float(val)
-            except:
+            except Exception:
                 pass
 
         return val

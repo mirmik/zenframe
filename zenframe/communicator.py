@@ -2,20 +2,9 @@
 
 import os
 import sys
-import io
-import base64
 import json
-import threading
-import traceback
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-
-import PyQt5.QtCore as QtCore
-
-import os
-import signal
+from PyQt5.QtCore import pyqtSignal, QObject
 
 from zenframe.util import print_to_stderr
 from zenframe.listener import Listener
@@ -24,10 +13,10 @@ from zenframe.finisher import register_destructor
 
 
 class Communicator(QObject):
-    """Объект обеспечивает связь между процессами, позволяя 
-    передавать комманды и отладочный вывод между оболочком и 
+    """Объект обеспечивает связь между процессами, позволяя
+    передавать комманды и отладочный вывод между оболочком и
     инстансами рабочих процессов.
-    Связь обеспечивается через входной файл @ifile и 
+    Связь обеспечивается через входной файл @ifile и
     выходной @ofile.
 
     TODO: вынести subproc из коммуникатора.

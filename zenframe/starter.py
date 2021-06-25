@@ -1,13 +1,12 @@
 import traceback
 import sys
 import json
-import time
 import runpy
 import os
 
 import zenframe.util
 from zenframe.finisher import terminate_all_subprocess, invoke_destructors, setup_interrupt_handlers
-from zenframe.unbound import unbound_worker_top_half, start_unbounded_worker
+from zenframe.unbound import unbound_worker_top_half
 
 from zenframe.configuration import Configuration
 from zenframe.retransler import ConsoleRetransler

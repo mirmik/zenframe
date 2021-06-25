@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QPlainTextEdit, QWidget
+from PyQt5.QtCore import QRect, Qt, qRound, QSize
+from PyQt5.QtGui import QPainter, QPalette, QFontMetrics
 
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
@@ -91,30 +91,30 @@ class PythonHighlighter(QSyntaxHighlighter):
         ">",
         ">=",
         # Arithmetic
-        "\+",
+        "\\+",
         "-",
-        "\*",
+        "\\*",
         "/",
         "//",
-        "\%",
-        "\*\*",
+        "\\%",
+        "\\*\\*",
         # In-place
-        "\+=",
+        "\\+=",
         "-=",
-        "\*=",
+        "\\*=",
         "/=",
-        "\%=",
+        "\\%=",
         # Bitwise
-        "\^",
-        "\|",
-        "\&",
-        "\~",
+        "\\^",
+        "\\|",
+        "\\&",
+        "\\~",
         ">>",
         "<<",
     ]
 
     # Python braces
-    braces = ["\{", "\}", "\(", "\)", "\[", "\]"]
+    braces = ["\\{", "\\}", "\\(", "\\)", "\\[", "\\]"]
 
     def __init__(self, document):
         QSyntaxHighlighter.__init__(self, document)
@@ -330,7 +330,6 @@ class TextEditor(QPlainTextEdit):
             event.rect().width(),
             event.rect().height())
         painter.fillRect(rect, self.base_color)
-        #painter.fillRect(event.rect(), Qt.red)
 
         block = self.firstVisibleBlock()
         blockNumber = block.blockNumber()
