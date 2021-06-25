@@ -1,10 +1,7 @@
 import os
 import sys
-import signal
-import tempfile
-import time
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtOpenGL
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from zenframe.inotifier import InotifyThread
 from zenframe.screen_saver import ScreenSaverWidget
@@ -13,7 +10,6 @@ from zenframe.text_editor import TextEditor
 from zenframe.client import Client
 from zenframe.configuration import Configuration
 
-import zenframe.util
 from zenframe.util import print_to_stderr
 
 from zenframe.settings import BaseSettings
@@ -148,7 +144,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         for pid in self._clients:
             if (
                     not pid == current_pid and
-                    not pid in self._keep_alive_pids):
+                    pid not in self._keep_alive_pids):
                 self._clients[pid].terminate()
                 to_delete.append(pid)
 
@@ -322,9 +318,6 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
 
         return client
 
-    def openStartEvent(self, path):
-        pass
-
     def internal_key_pressed_raw(self, key, modifiers, text):
         self.activateWindow()
         self.texteditor.setFocus()
@@ -351,7 +344,7 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
     def message_handler(self, data, procpid):
         try:
             cmd = data["cmd"]
-        except:
+        except Exception:
             return False
 
         if procpid != self._current_client.declared_pid() and data["cmd"] != "finish_screen":

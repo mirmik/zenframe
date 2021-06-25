@@ -1,14 +1,13 @@
-import sys
 import io
+import sys
 import os
 import time
 import traceback
 import subprocess
 import runpy
-import signal
 import json
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtOpenGL
+from PyQt5 import QtCore, QtWidgets
 
 from zenframe.util import print_to_stderr
 from zenframe.retransler import ConsoleRetransler

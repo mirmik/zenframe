@@ -1,7 +1,6 @@
 import signal
 import psutil
-import sys
-from zenframe.util import print_to_stderr
+import os
 
 DESTRUCTORS = {}
 
@@ -38,7 +37,7 @@ def terminate_all_subprocess():
 def interrupt_handler(a, b):
     invoke_destructors()
     terminate_all_subprocess()
-    sys.exit()
+    os._exit(0)
 
 
 def setup_interrupt_handlers():

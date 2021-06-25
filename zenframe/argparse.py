@@ -8,7 +8,6 @@ class ArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__()
 
-        #self.add_argument("--zenframe", action="store_true", help="Test frame sublibrary")
         self.add_argument("--unbound", action="store_true")
         self.add_argument("--display", action="store_true")
         self.add_argument("--frame", action="store_true")

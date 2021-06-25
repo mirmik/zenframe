@@ -2,9 +2,7 @@ import os
 import time
 import threading
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtCore import QThread, pyqtSignal
 
 from zenframe.finisher import register_destructor
 

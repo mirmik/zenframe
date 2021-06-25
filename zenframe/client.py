@@ -1,5 +1,3 @@
-from zenframe.util import print_to_stderr
-
 # NOTE: При работе с pyinstaller pid возвращаемый с submodule отличается от declared_pid
 
 

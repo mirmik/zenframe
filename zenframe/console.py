@@ -1,9 +1,8 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont, QFontMetrics, QColor, QPalette
 
 import sys
-from zenframe.util import print_to_stderr
 
 
 class ConsoleWidget(QTextEdit):

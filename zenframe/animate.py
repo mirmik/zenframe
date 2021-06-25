@@ -1,6 +1,4 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtCore import QThread, pyqtSignal
 
 import time
 import traceback
@@ -39,9 +37,7 @@ class AnimateThread(QThread):
 
     def run(self):
         start_time = time.time()
-
-        lasttime = time.time() - self.step
-        plantime = time.time()
+        plantime = start_time
 
         while 1:
             curtime = time.time()
@@ -64,7 +60,7 @@ class AnimateThread(QThread):
                 self.updater()
                 if self.cancelled:
                     return
-            except:
+            except Exception:
                 print("Error: Exception in animation thread.")
                 traceback.print_exc(file=sys.stdout)
                 return

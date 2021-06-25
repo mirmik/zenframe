@@ -2,19 +2,14 @@
 
 import PyQt5.QtCore as QtCore
 import select
-import io
 import os
 import sys
 import signal
 
-from zenframe.util import print_to_stderr
-
 if sys.platform == "linux":
     import fcntl
 elif sys.platform == "win32":
-    import msvcrt
-    from ctypes import windll, byref, wintypes, GetLastError, WinError
-    from ctypes.wintypes import HANDLE, DWORD, BOOL, LPDWORD
+    from ctypes import wintypes
     PIPE_NOWAIT = wintypes.DWORD(0x00000001)
 else:
     raise Exception("Unresolved OS error")

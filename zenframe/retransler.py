@@ -3,7 +3,6 @@ import os
 import io
 import sys
 
-import PyQt5.QtCore as QtCore
 from PyQt5.QtCore import QObject
 from zenframe.util import print_to_stderr
 from zenframe.listener import Listener
@@ -14,8 +13,8 @@ PREVENT_OUTPUT_STOP = ' ########################################\n'
 
 
 class ConsoleRetransler(QObject):
-    """Ретранслятор перехватывает поток вывода на файловый дескриптор 
-    принадлежащий @stdout и читает данные из него в отдельном потоке, 
+    """Ретранслятор перехватывает поток вывода на файловый дескриптор
+    принадлежащий @stdout и читает данные из него в отдельном потоке,
     перенаправляя их на дескриптор @new_desc.
 
     Это позволяет перехватывать стандартный вывод в подчинённых процессах и перенаправлять его на встроенную консоль.

@@ -1,11 +1,9 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QTimer, QPoint, Qt, QRect
+from PyQt5.QtGui import QFontMetrics, QFont, QColor, QBrush, QPainter
 
-import random
 import time
 import sys
-import os
 
 
 class ScreenSaverWidget(QWidget):
@@ -23,7 +21,6 @@ class ScreenSaverWidget(QWidget):
 
     def set_background(self, bg):
         self.background_pixmap = bg
-        #self.background_pixmap_dark = bg.copy(0,0,bg.width(),bg.height())
 
     def set_error_state(self):
         self.mode = "error"
@@ -55,7 +52,7 @@ class ScreenSaverWidget(QWidget):
         painter = QPainter(self)
         painter.setPen(Qt.white)
 
-        if self.background_pixmap == None:
+        if self.background_pixmap is None:
             painter.setBrush(Qt.black)
             painter.drawRect(0, 0, self.width(), self.height())
         else:

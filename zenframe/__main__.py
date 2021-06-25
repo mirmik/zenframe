@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 # coding:utf-8
 
-import os
-import sys
-import time
-
-import psutil
-import traceback
-import runpy
-import signal
 import time
 
 import zenframe.starter as frame
@@ -72,8 +64,6 @@ def top_half(communicator):
 
 
 def bottom_half(communicator, timelapse=0):
-    from PyQt5 import QtCore
-    Qt = QtCore.Qt
     wdg = TestWidget(timelapse=timelapse)
     return wdg
 
@@ -98,7 +88,7 @@ def main():
     pargs = console_options_handle()
 
     if pargs.display:
-        from PyQt5 import QtWidgets, QtCore
+        from PyQt5 import QtWidgets
         app = QtWidgets.QApplication([])
         wdg = QtWidgets.QLabel("ZenFrame")  # TestWidget()
         wdg.show()
