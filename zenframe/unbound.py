@@ -221,7 +221,15 @@ def unbound_frame_summon(widget_creator, application_name, *args, **kwargs):
 
     timer = QtCore.QTimer()
     timer.start(500)  # You may change this if you wish.
-    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
+
+    def unsleeper():
+        try:
+            None
+            pass
+        except:
+            os._exit(0)
+
+    timer.timeout.connect(unsleeper)  # Let the interpreter run each 500 ms.
 
     AnimateThread.start_all_threads()
     QtWidgets.QApplication.instance().exec()

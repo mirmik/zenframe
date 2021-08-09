@@ -30,9 +30,6 @@ def terminate_all_subprocess():
     for p in procs:
         p.terminate()
 
-    for p in procs:
-        p.wait()
-
 
 def interrupt_handler(a, b):
     invoke_destructors()
