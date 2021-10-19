@@ -12,7 +12,7 @@ directory = os.path.dirname(os.path.realpath(__file__))
 
 requires = [
     "evalcache",
-    "PyQt5!=5.14.1",
+    "PyQt5!=5.14.2",
     "psutil"
 ]
 

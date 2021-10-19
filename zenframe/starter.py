@@ -72,6 +72,9 @@ def exec_worker_only(pargs):
     if pargs.no_show:
         Configuration.NOSHOW = True
 
+    if pargs.display:
+        Configuration.WIDGET_ONLY = True
+
     if len(pargs.paths) != 1:
         raise Exception("Display mode invoked without path")
 
