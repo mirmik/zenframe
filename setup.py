@@ -12,14 +12,14 @@ directory = os.path.dirname(os.path.realpath(__file__))
 
 requires = [
     "evalcache",
-    "PyQt5!=5.14.2",
+    "PyQt5!=5.14.1",
     "psutil"
 ]
 
 setup(
     name="zenframe",
     packages=["zenframe"],
-    version="1.1.2",
+    version="1.1.3",
     license="MIT",
     description="Sandbox for computationally-graphical scripts",
     author="mirmik",
