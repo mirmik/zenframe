@@ -74,29 +74,29 @@ class ScreenSaverWidget(QWidget):
         if True:  # time.time() - self.last_install_time > 0.1 or self.mode == "error":
             painter.drawText(
                 QPoint(
-                    self.width()/2 - QFontMetrics(font).width(message)/2,
-                    self.height()/2 - 1 * QFontMetrics(font).height()),
+                    int(self.width()/2 - QFontMetrics(font).width(message)/2),
+                    int(self.height()/2 - 1 * QFontMetrics(font).height())),
                 message)
 
             painter.drawText(
                 QPoint(
-                    self.width()/2 -
-                    QFontMetrics(font).width(self.subtext[0])/2,
-                    self.height()/2 + 0 * QFontMetrics(font).height()),
+                    int(self.width()/2 -
+                    QFontMetrics(font).width(self.subtext[0])/2),
+                    int(self.height()/2 + 0 * QFontMetrics(font).height())),
                 self.subtext[0])
 
             painter.drawText(
                 QPoint(
-                    self.width()/2 -
-                    QFontMetrics(font).width(self.subtext[1])/2,
-                    self.height()/2 + 1*QFontMetrics(font).height()),
+                    int(self.width()/2 -
+                    QFontMetrics(font).width(self.subtext[1])/2),
+                    int(self.height()/2 + 1*QFontMetrics(font).height())),
                 self.subtext[1])
 
             painter.drawText(
                 QPoint(
-                    self.width()/2 -
-                    QFontMetrics(font).width(self.subtext[2])/2,
-                    self.height()/2 + 2*QFontMetrics(font).height()),
+                    int(self.width()/2 -
+                    QFontMetrics(font).width(self.subtext[2])/2),
+                    int(self.height()/2 + 2*QFontMetrics(font).height())),
                 self.subtext[2])
 
         QTimer.singleShot(750, self.repaint)

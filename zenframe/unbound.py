@@ -145,7 +145,7 @@ def unbound_worker_bottom_half(*args, **kwargs):
     time.sleep(0.05)
 
     timer = QtCore.QTimer()
-    timer.start(Configuration.TIMER_PULSE * 1000)
+    timer.start(int(Configuration.TIMER_PULSE * 1000))
     timer.timeout.connect(lambda: None)
 
     AnimateThread.start_all_threads()

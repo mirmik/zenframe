@@ -140,7 +140,7 @@ def start_application(frame_creator, openpath=None, unbound=False, norestore=Fal
             MAINWINDOW.open_declared(openpath)
 
     timer = QtCore.QTimer()
-    timer.start(Configuration.TIMER_PULSE * 1000)
+    timer.start(int(Configuration.TIMER_PULSE * 1000))
     timer.timeout.connect(lambda: None)
 
     MAINWINDOW.show()
