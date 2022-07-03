@@ -233,9 +233,9 @@ class ZenFrame(QtWidgets.QMainWindow, ZenFrameActionsMixin):
         w = self.hsplitter.width()
         h = self.vsplitter.height()
         if hsplitter_position[0] == "0" or hsplitter_position[0] == "1":
-            self.hsplitter.setSizes([0.382*w, 0.618*w])
+            self.hsplitter.setSizes([int(0.382*w), int(0.618*w)])
         if vsplitter_position[0] == "0" or vsplitter_position[1] == "0":
-            self.vsplitter.setSizes([0.618*h, 0.382*h])
+            self.vsplitter.setSizes([int(0.618*h), int(0.382*h)])
 
         self.hsplitter.refresh()
         self.vsplitter.refresh()
