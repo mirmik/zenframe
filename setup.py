@@ -19,7 +19,7 @@ requires = [
 setup(
     name="zenframe",
     packages=["zenframe"],
-    version="1.1.3",
+    version="1.2.0",
     license="MIT",
     description="Sandbox for computationally-graphical scripts",
     author="mirmik",
